@@ -63,10 +63,10 @@
     .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     @media (max-width: 520px) { .field-row { grid-template-columns: 1fr; } }
 
-    /* ── Product item rows ── */
+    /* ── Product item rows (Grid diubah jadi 5 kolom + 1 kolom hapus) ── */
     .items-header {
         display: grid;
-        grid-template-columns: 1fr 110px 140px 120px 36px;
+        grid-template-columns: 1fr 100px 130px 130px 120px 36px;
         gap: 10px; padding: 0 0 8px;
         border-bottom: 1px solid var(--border); margin-bottom: 10px;
     }
@@ -77,7 +77,7 @@
 
     .item-row {
         display: grid;
-        grid-template-columns: 1fr 110px 140px 120px 36px;
+        grid-template-columns: 1fr 100px 130px 130px 120px 36px;
         gap: 10px; align-items: start;
         padding: 12px 14px;
         background: var(--bg); border: 1px solid var(--border);
@@ -92,7 +92,6 @@
         background: var(--surface); font-size: 13px; padding: 7px 10px;
     }
 
-    /* Style untuk form select ketika terkunci (disabled) */
     .item-row .form-select:disabled {
         background-color: #f3f4f6;
         cursor: not-allowed;
@@ -154,11 +153,11 @@
         background: #fff; font-family: monospace;
     }
 
-    @media (max-width: 640px) {
+    @media (max-width: 768px) {
         .items-header { display: none; }
         .item-row {
             grid-template-columns: 1fr 1fr;
-            grid-template-rows: auto auto auto;
+            grid-template-rows: auto auto auto auto;
         }
         .item-row > *:first-child { grid-column: 1 / -1; }
         .subtotal-display { grid-column: 1 / 2; }
@@ -229,7 +228,8 @@
             <div class="items-header d-none d-md-grid">
                 <span>Produk</span>
                 <span>Jumlah</span>
-                <span>Harga Satuan (Rp)</span>
+                <span>Modal Awal (Rp)</span>
+                <span>Harga Jual (Rp)</span>
                 <span>Subtotal</span>
                 <span></span>
             </div>
@@ -293,7 +293,6 @@ function createRow(idx) {
     row.className = 'item-row';
     row.dataset.idx = idx;
 
-    // Cek apakah supplier sudah dipilih saat membuat baris baru
     const currentSupplier = document.getElementById('supplier_id').value;
     const isDisabled = currentSupplier ? '' : 'disabled';
     const placeholderText = currentSupplier ? '— Pilih Produk —' : '⚠️ Pilih Supplier Terlebih Dahulu';
@@ -315,19 +314,25 @@ function createRow(idx) {
                 class="form-control price-input"
                 placeholder="0" min="0" step="1" required>
         </div>
+        <div>
+            <input type="number" name="items[${idx}][harga_jual]"
+                class="form-control selling-price-input"
+                placeholder="0" min="0" step="1" required>
+        </div>
         <div class="subtotal-display empty" id="subtotal-${idx}">—</div>
         <button type="button" class="btn-remove-row" title="Hapus baris">
             <i class="fas fa-xmark"></i>
         </button>
     `;
 
-    const qtyInput   = row.querySelector('.qty-input');
-    const priceInput = row.querySelector('.price-input');
-    const subtotalEl = row.querySelector(`#subtotal-${idx}`);
+    const qtyInput          = row.querySelector('.qty-input');
+    const priceInput        = row.querySelector('.price-input');
+    const sellingPriceInput = row.querySelector('.selling-price-input');
+    const subtotalEl        = row.querySelector(`#subtotal-${idx}`);
 
     function updateSubtotal() {
         const qty   = parseFloat(qtyInput.value)   || 0;
-        const price = parseFloat(priceInput.value) || 0;
+        const price = parseFloat(priceInput.value) || 0; // Menggunakan harga modal awal untuk subtotal
         const sub   = qty * price;
         if (sub > 0) {
             subtotalEl.textContent = fmt(sub);
@@ -341,6 +346,7 @@ function createRow(idx) {
 
     qtyInput.addEventListener('input', updateSubtotal);
     priceInput.addEventListener('input', updateSubtotal);
+    sellingPriceInput.addEventListener('input', updateSubtotal);
 
     row.querySelector('.btn-remove-row').addEventListener('click', () => {
         row.remove();
@@ -390,7 +396,6 @@ window.addEventListener('DOMContentLoaded', () => {
         const supplierId = this.value;
         supplierProducts = [];
 
-        // Jika supplier dikosongkan kembali, kunci semua pilihan produk
         if (!supplierId) {
             document.querySelectorAll('.product-select').forEach(select => {
                 select.innerHTML = '<option value="">⚠️ Pilih Supplier Terlebih Dahulu</option>';
@@ -415,7 +420,7 @@ window.addEventListener('DOMContentLoaded', () => {
                     `;
                 });
                 select.value = currentVal;
-                select.disabled = false; // Buka kunci pilihan produk karena supplier sudah valid
+                select.disabled = false;
             });
         } catch (error) {
             console.error('Gagal mengambil produk supplier:', error);
@@ -430,9 +435,10 @@ window.addEventListener('DOMContentLoaded', () => {
             const rows = document.querySelectorAll('.item-row');
             const last = rows[rows.length - 1];
             if (last) {
-                last.querySelector('.product-select').value = item.product_id   || '';
-                last.querySelector('.qty-input').value      = item.jumlah_kirim || '';
-                last.querySelector('.price-input').value    = item.harga        || '';
+                last.querySelector('.product-select').value      = item.product_id   || '';
+                last.querySelector('.qty-input').value           = item.jumlah_kirim || '';
+                last.querySelector('.price-input').value         = item.harga        || '';
+                last.querySelector('.selling-price-input').value = item.harga_jual   || '';
                 last.querySelector('.qty-input').dispatchEvent(new Event('input'));
             }
         });
@@ -459,11 +465,12 @@ document.getElementById('deliveryForm').addEventListener('submit', function(e) {
         const prod  = row.querySelector('.product-select').value;
         const qty   = row.querySelector('.qty-input').value;
         const price = row.querySelector('.price-input').value;
-        if (!prod || !qty || !price) valid = false;
+        const sell  = row.querySelector('.selling-price-input').value;
+        if (!prod || !qty || !price || !sell) valid = false;
     });
     if (!valid) {
         e.preventDefault();
-        alert('Lengkapi semua kolom produk (Produk, Jumlah, Harga).');
+        alert('Lengkapi semua kolom produk (Produk, Jumlah, Modal Awal, Harga Jual).');
     }
 });
 </script>

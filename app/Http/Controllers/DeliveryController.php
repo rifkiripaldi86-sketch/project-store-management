@@ -87,7 +87,7 @@ class DeliveryController extends Controller
         return response()->json($products);
     }
 
-    public function store(Request $request)
+public function store(Request $request)
     {
         $validated = $request->validate([
             'supplier_id'          => 'required|exists:suppliers,id',
@@ -96,6 +96,7 @@ class DeliveryController extends Controller
             'items.*.product_id'   => 'required|exists:products,id',
             'items.*.jumlah_kirim' => 'required|integer|min:1',
             'items.*.harga'        => 'required|numeric|min:0',
+            'items.*.harga_jual'   => 'required|numeric|min:0', // Menambahkan validasi harga jual
         ]);
 
         DB::transaction(function () use ($validated) {
@@ -106,11 +107,18 @@ class DeliveryController extends Controller
             ]);
 
             foreach ($validated['items'] as $item) {
+                // 1. Simpan item kiriman beserta harga beli dan harga jualnya
                 DeliveryItem::create([
                     'delivery_id'  => $delivery->id,
                     'product_id'   => $item['product_id'],
                     'jumlah_kirim' => $item['jumlah_kirim'],
                     'harga'        => $item['harga'],
+                    'harga_jual'   => $item['harga_jual'], // Ikut menyimpan harga jual ke riwayat kiriman
+                ]);
+
+                // 2. Update stok dan perbarui harga jual di tabel master produk
+                Product::where('id', $item['product_id'])->update([
+                    'harga_jual' => $item['harga_jual'] // Update harga jual produk terbaru
                 ]);
 
                 Product::where('id', $item['product_id'])
@@ -122,7 +130,6 @@ class DeliveryController extends Controller
             ->route('deliveries.index')
             ->with('success', 'Kiriman barang berhasil disimpan.');
     }
-
     public function show(Delivery $delivery)
     {
         $delivery->load('items.product', 'supplier');
