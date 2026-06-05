@@ -9,7 +9,7 @@ class DeliveryItem extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['delivery_id', 'product_id', 'jumlah_kirim', 'harga'];
+    protected $fillable = ['delivery_id', 'product_id', 'jumlah_kirim', 'harga', 'harga_jual',];
 
     public function delivery()
     {

@@ -241,16 +241,13 @@
 </div>
 @endif
 
-{{-- ════════════════════════════════════════════
-     LAPORAN SUPPLIER (muncul saat supplier dipilih)
-     ════════════════════════════════════════════ --}}
+{{-- LAPORAN SUPPLIER --}}
 @if($supplierId && $supplier)
     @include('reports.partials.supplier-table', [
         'supplier'     => $supplier,
         'supplierRows' => $supplierRows,
         'periodLabel'  => $date->translatedFormat('d F Y'),
     ])
-
     <div class="section-divider">Ringkasan Harian</div>
 @endif
 
@@ -303,33 +300,60 @@
         <thead>
             <tr>
                 <th>Produk</th>
+                <th class="text-right">Modal Satuan</th>
+                <th class="text-right">Harga Jual</th>
                 <th class="text-right">Jumlah Terjual</th>
                 <th class="text-right">Total (Rp)</th>
             </tr>
         </thead>
-        <tbody>
-            @forelse($saleItems as $item)
+<tbody>
+        @forelse($saleItems ?? [] as $item)
+            @php
+                // Mengambil nama produk dari variabel query atau relasi model
+                $namaProduk = $item->product_name ?? ($item->product->nama_produk ?? 'Produk Tidak Diketahui');
+
+                // Mengambil jumlah terjual
+                $jumlahTerjual = $item->total_quantity ?? ($item->laku ?? ($item->jumlah ?? 0));
+
+                // Menentukan harga jual
+                if (isset($item->harga_jual) && $item->harga_jual > 0) {
+                    $hargaJual = $item->harga_jual;
+                } elseif (isset($item->harga) && $item->harga > 0) {
+                    $hargaJual = $item->harga;
+                } else {
+                    $hargaJual = $item->product->harga_jual ?? 0;
+                }
+
+                // Menentukan harga beli
+                $hargaBeli = $item->harga_beli ?? ($item->product->harga_beli ?? 0);
+
+                // Hitung total akhir baris
+                $totalPenjualan = $jumlahTerjual * $hargaJual;
+            @endphp
             <tr>
-                <td>{{ $item->product_name }}</td>
-                <td class="text-right">{{ number_format($item->total_quantity, 0, ',', '.') }} pcs</td>
-                <td class="text-right mono">Rp {{ number_format($item->total_amount, 0, ',', '.') }}</td>
+                <td>{{ $namaProduk }}</td>
+                <td class="text-right mono">Rp {{ number_format($hargaBeli, 0, ',', '.') }}</td>
+                <td class="text-right mono">Rp {{ number_format($hargaJual, 0, ',', '.') }}</td>
+                <td class="text-right">{{ number_format($jumlahTerjual, 0, ',', '.') }} pcs</td>
+                <td class="text-right mono">Rp {{ number_format($totalPenjualan, 0, ',', '.') }}</td>
             </tr>
-            @empty
-            <tr class="empty-row"><td colspan="3">Tidak ada penjualan hari ini</td></tr>
-            @endforelse
+        @empty
+            <tr class="empty-row"><td colspan="5">Tidak ada penjualan hari ini</td></tr>
+        @endforelse
         </tbody>
-        @if($saleItems->count() > 0)
+
+        {{-- FIX: Cek jika data ada menggunakan method Collection, dan perbaikan penutup tag tfoot --}}
+        @if(isset($saleItems) && $saleItems->isNotEmpty())
         <tfoot>
             <tr>
-                <td style="font-weight:600;">Total</td>
+                <td colspan="3" style="font-weight:600;">Total</td>
                 <td class="text-right" style="font-weight:600;">{{ number_format($barangTerjual, 0, ',', '.') }} pcs</td>
-                <td class="text-right mono" style="font-weight:700;">Rp {{ number_format($salesTotal, 0, ',', '.') }}</td>
+                {{-- FIX LOGIKA: Menjumlahkan total_amount langsung dari data item agar sinkron --}}
+                <td class="text-right mono" style="font-weight:700;">Rp {{ number_format($saleItems->sum('total_amount'), 0, ',', '.') }}</td>
             </tr>
         </tfoot>
         @endif
     </table>
-</div>
-
 {{-- Kas Masuk & Keluar --}}
 <div class="two-col">
     <div class="section-card" style="margin-bottom:0;">

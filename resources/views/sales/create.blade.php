@@ -61,7 +61,7 @@
     .form-control.is-invalid, .form-select.is-invalid { border-color: #ef4444; }
     .invalid-feedback { font-size: 12px; color: #dc2626; margin-top: 4px; display: block; }
 
-    /* ── Product item rows ── */
+    /* Product item rows */
     .items-header {
         display: grid;
         grid-template-columns: 1fr 110px 140px 120px 36px;
@@ -72,7 +72,21 @@
         font-size: 10.5px; font-weight: 700; letter-spacing: 0.7px;
         text-transform: uppercase; color: var(--ink-muted);
     }
-
+    .field-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    .product-select:disabled {
+        background-color: #f3f4f6;
+        cursor: not-allowed;
+        color: #9ca3af;
+    }
+    @media (max-width: 640px) {
+        .field-row {
+            grid-template-columns: 1fr;
+        }
+    }
     .item-row {
         display: grid;
         grid-template-columns: 1fr 110px 140px 120px 36px;
@@ -181,14 +195,32 @@
 
             {{-- Informasi Transaksi --}}
             <div class="section-title">Informasi Transaksi</div>
-            <div class="field-group" style="max-width:260px; margin-bottom:24px;">
-                <label class="field-label" for="tanggal">
-                    Tanggal <span class="required">*</span>
-                </label>
-                <input type="date" name="tanggal" id="tanggal"
-                    class="form-control @error('tanggal') is-invalid @enderror"
-                    value="{{ old('tanggal', date('Y-m-d')) }}" required>
-                @error('tanggal')<span class="invalid-feedback">{{ $message }}</span>@enderror
+            <div class="field-row mb-4">
+                {{-- Kolom Tanggal --}}
+                <div class="field-group">
+                    <label class="field-label" for="tanggal">
+                        Tanggal <span class="required">*</span>
+                    </label>
+                    <input type="date" name="tanggal" id="tanggal"
+                        class="form-control @error('tanggal') is-invalid @enderror"
+                        value="{{ old('tanggal', date('Y-m-d')) }}" required>
+                    @error('tanggal')<span class="invalid-feedback">{{ $message }}</span>@enderror
+                </div>
+
+                {{-- Kolom Supplier (onchange reload dihapus total biar gak relog) --}}
+                <div class="field-group">
+                    <label class="field-label" for="supplier_id">
+                        Supplier <span class="required">*</span>
+                    </label>
+                    <select name="supplier_id" id="supplier_id" class="form-select" required>
+                        <option value="">— Pilih Supplier —</option>
+                        @foreach($suppliers as $supplier)
+                            <option value="{{ $supplier->id }}" {{ old('supplier_id') == $supplier->id ? 'selected' : '' }}>
+                                {{ $supplier->nama_supplier }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
 
             {{-- Daftar Produk --}}
@@ -203,71 +235,27 @@
             </div>
 
             <div id="items-wrapper">
-                {{-- Server‑side rows (old input or initial empty row) --}}
-                @php
-                    $oldItems = old('items', []);
-                    $hasOldItems = count($oldItems) > 0;
-                @endphp
-
-                @if($hasOldItems)
-                    @foreach($oldItems as $idx => $item)
-                        <div class="item-row" data-idx="{{ $idx }}">
-                            <div>
-                                <select name="items[{{ $idx }}][product_id]" class="form-select product-select" required>
-                                    <option value="">— Pilih Produk —</option>
-                                    @foreach($products as $product)
-                                        <option value="{{ $product->id }}" data-stok="{{ $product->current_stock }}"
-                                            {{ (string)$item['product_id'] === (string)$product->id ? 'selected' : '' }}>
-                                            {{ $product->nama_produk }} (Stok: {{ $product->current_stock }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <div class="stok-hint" id="stok-hint-{{ $idx }}"></div>
-                            </div>
-                            <div>
-                                <input type="number" name="items[{{ $idx }}][laku]"
-                                    class="form-control qty-input" placeholder="0" min="1" step="1"
-                                    value="{{ $item['laku'] ?? '' }}" required>
-                            </div>
-                            <div>
-                                <input type="number" name="items[{{ $idx }}][harga_jual]"
-                                    class="form-control price-input" placeholder="0" min="0" step="0.01"
-                                    value="{{ $item['harga_jual'] ?? '' }}" required>
-                            </div>
-                            <div class="subtotal-display empty" id="subtotal-{{ $idx }}">—</div>
-                            <button type="button" class="btn-remove-row" title="Hapus baris">
-                                <i class="fas fa-xmark"></i>
-                            </button>
-                        </div>
-                    @endforeach
-                @else
-                    {{-- One empty row as default --}}
-                    <div class="item-row" data-idx="0">
-                        <div>
-                            <select name="items[0][product_id]" class="form-select product-select" required>
-                                <option value="">— Pilih Produk —</option>
-                                @foreach($products as $product)
-                                    <option value="{{ $product->id }}" data-stok="{{ $product->current_stock }}">
-                                        {{ $product->nama_produk }} (Stok: {{ $product->current_stock }})
-                                    </option>
-                                @endforeach
-                            </select>
-                            <div class="stok-hint" id="stok-hint-0"></div>
-                        </div>
-                        <div>
-                            <input type="number" name="items[0][laku]" class="form-control qty-input"
-                                placeholder="0" min="1" step="1" required>
-                        </div>
-                        <div>
-                            <input type="number" name="items[0][harga_jual]" class="form-control price-input"
-                                placeholder="0" min="0" step="0.01" required>
-                        </div>
-                        <div class="subtotal-display empty" id="subtotal-0">—</div>
-                        <button type="button" class="btn-remove-row" title="Hapus baris">
-                            <i class="fas fa-xmark"></i>
-                        </button>
+                {{-- Baris pertama di-block default sampai supplier dipilih --}}
+                <div class="item-row" data-idx="0">
+                    <div>
+                        <select name="items[0][product_id]" class="form-select product-select" disabled required>
+                            <option value="">⚠️ Pilih Supplier Terlebih Dahulu</option>
+                        </select>
+                        <div class="stok-hint" id="stok-hint-0"></div>
                     </div>
-                @endif
+                    <div>
+                        <input type="number" name="items[0][laku]" class="form-control qty-input"
+                            placeholder="0" min="1" step="1" required>
+                    </div>
+                    <div>
+                        <input type="number" name="items[0][harga_jual]" class="form-control price-input"
+                            placeholder="0" min="0" step="1" required>
+                    </div>
+                    <div class="subtotal-display empty" id="subtotal-0">—</div>
+                    <button type="button" class="btn-remove-row" title="Hapus baris">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+                </div>
             </div>
 
             <button type="button" id="btn-add-row" class="btn-add-row">
@@ -296,23 +284,15 @@
                    border:1px solid var(--border); color:var(--ink-soft);">
             Batal
         </a>
-        <span style="margin-left:auto; font-size:12px; color:var(--ink-muted); display:flex; align-items:center; gap:5px;">
-            <kbd class="kbd">Ctrl</kbd> + <kbd class="kbd">Enter</kbd> untuk simpan
-        </span>
     </div>
 </div>
 
-{{-- Template for cloning new rows --}}
+{{-- Template Kloning Baris Baru --}}
 <template id="item-row-template">
     <div class="item-row" data-idx="__INDEX__">
         <div>
-            <select name="items[__INDEX__][product_id]" class="form-select product-select" required>
-                <option value="">— Pilih Produk —</option>
-                @foreach($products as $product)
-                    <option value="{{ $product->id }}" data-stok="{{ $product->current_stock }}">
-                        {{ $product->nama_produk }} (Stok: {{ $product->current_stock }})
-                    </option>
-                @endforeach
+            <select name="items[__INDEX__][product_id]" class="form-select product-select" disabled required>
+                <option value="">⚠️ Pilih Supplier Terlebih Dahulu</option>
             </select>
             <div class="stok-hint" id="stok-hint-__INDEX__"></div>
         </div>
@@ -322,7 +302,7 @@
         </div>
         <div>
             <input type="number" name="items[__INDEX__][harga_jual]" class="form-control price-input"
-                placeholder="0" min="0" step="0.01" required>
+                placeholder="0" min="0" step="1" required>
         </div>
         <div class="subtotal-display empty" id="subtotal-__INDEX__">—</div>
         <button type="button" class="btn-remove-row" title="Hapus baris">
@@ -334,10 +314,13 @@
 
 @push('scripts')
 <script>
-    // Helper: format Rupiah
+    // Ambil data produk yang dikirim dari controller
+    const PRODUCTS = @json($products_json ?? []);
+
+    // Format mata uang Rupiah
     const fmt = n => 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(n));
 
-    // Update subtotal for a single row
+    // Update subtotal per baris produk
     function updateRowSubtotal(row) {
         const qty   = parseFloat(row.querySelector('.qty-input').value)   || 0;
         const price = parseFloat(row.querySelector('.price-input').value) || 0;
@@ -352,7 +335,7 @@
         }
     }
 
-    // Update grand total and row count
+    // Update grand total dan jumlah produk terpilih
     function updateGrandTotalAndCount() {
         let total = 0;
         const rows = document.querySelectorAll('.item-row');
@@ -365,14 +348,13 @@
         document.getElementById('row-count').textContent = rows.length + ' produk';
     }
 
-    // Setup event listeners for a single row (stock hint & subtotal)
+    // Fungsi pasang Event Listener ke baris produk
     function bindRowEvents(row, idx) {
         const select     = row.querySelector('.product-select');
         const qtyInput   = row.querySelector('.qty-input');
         const priceInput = row.querySelector('.price-input');
         const stokHint   = row.querySelector('.stok-hint');
 
-        // Stock hint on product change
         select.addEventListener('change', () => {
             const opt  = select.selectedOptions[0];
             const stok = parseInt(opt?.dataset?.stok ?? 0);
@@ -386,7 +368,6 @@
             updateGrandTotalAndCount();
         });
 
-        // Subtotal update on quantity/price change
         const recalc = () => {
             updateRowSubtotal(row);
             updateGrandTotalAndCount();
@@ -394,73 +375,93 @@
         qtyInput.addEventListener('input', recalc);
         priceInput.addEventListener('input', recalc);
 
-        // Remove row button
         const removeBtn = row.querySelector('.btn-remove-row');
         removeBtn.addEventListener('click', () => {
             row.remove();
             updateGrandTotalAndCount();
         });
-
-        // Trigger initial stock hint if a product is preselected
-        if (select.value) {
-            select.dispatchEvent(new Event('change'));
-        } else {
-            recalc(); // just to ensure subtotal reflects any pre-filled values
-        }
     }
 
-    // Add a new row by cloning the template
-    let nextIndex = {{ count(old('items', [])) ?: 1 }}; // continue from existing rows count
+    let nextIndex = 1;
 
+    // Fungsi tambah baris produk baru secara dinamis
     function addNewRow() {
+        const supplierId = document.getElementById('supplier_id').value;
+
+        // Proteksi: Jika supplier belum dipilih, blok aksi tambah produk!
+        if (!supplierId) {
+            alert('Pilih Supplier terlebih dahulu sebelum menambah produk!');
+            document.getElementById('supplier_id').focus();
+            return;
+        }
+
         const template = document.getElementById('item-row-template');
         const clone = template.content.cloneNode(true);
-        const row = clone.firstElementChild; // the .item-row div
+        const row = clone.firstElementChild;
 
-        // Replace __INDEX__ placeholders
         const currentIdx = nextIndex++;
         row.innerHTML = row.innerHTML.replace(/__INDEX__/g, currentIdx);
-        // Re-query elements inside the row after innerHTML replacement
         const newRow = row;
-        // Append to wrapper
+
         document.getElementById('items-wrapper').appendChild(newRow);
-        // Bind events
         bindRowEvents(newRow, currentIdx);
 
-        // Animation
-        newRow.style.opacity = '0';
-        newRow.style.transform = 'translateY(8px)';
-        requestAnimationFrame(() => {
-            newRow.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
-            newRow.style.opacity = '1';
-            newRow.style.transform = 'translateY(0)';
-        });
+        // Isi otomatis opsi produk sesuai supplier yang aktif pada baris baru ini
+        const select = newRow.querySelector('.product-select');
+        populateProductOptions(select, supplierId);
 
-        newRow.querySelector('select')?.focus();
         updateGrandTotalAndCount();
     }
 
-    // Attach global add button
+    // Fungsi pembantu untuk mengisi opsi produk berdasarkan supplier id secara real-time
+    function populateProductOptions(selectElement, supplierId) {
+        if (!supplierId) {
+            selectElement.innerHTML = '<option value="">⚠️ Pilih Supplier Terlebih Dahulu</option>';
+            selectElement.disabled = true;
+            return;
+        }
+
+        let options = '<option value="">— Pilih Produk —</option>';
+        let hasProducts = false;
+
+        PRODUCTS.forEach(product => {
+            if (product.supplier_id == supplierId) {
+                options += `<option value="${product.id}" data-stok="${product.stok}">${product.nama_produk} (Stok: ${product.stok})</option>`;
+                hasProducts = true;
+            }
+        });
+
+        if (!hasProducts) {
+            options = '<option value="">❌ Tidak ada produk untuk supplier ini</option>';
+        }
+
+        selectElement.innerHTML = options;
+        selectElement.disabled = false;
+    }
+
+    // LOGIKA UTAMA: Ketika Supplier dipilih (tanpa relog)
+    document.getElementById('supplier_id').addEventListener('change', function () {
+        const supplierId = this.value;
+
+        // Update semua baris produk yang sudah ada di layar saat ini secara instan
+        document.querySelectorAll('.product-select').forEach(select => {
+            populateProductOptions(select, supplierId);
+        });
+
+        updateGrandTotalAndCount();
+    });
+
+    // Inisialisasi awal tombo tambah baris
     document.getElementById('btn-add-row').addEventListener('click', addNewRow);
 
-    // Initialize existing rows: bind events and recalc totals
+    // Jalankan binding untuk baris default pertama kali load
     document.querySelectorAll('.item-row').forEach((row, idx) => {
-        // Ensure the row has a proper data-idx attribute (maybe missing from server-side rows)
-        if (!row.dataset.idx) row.dataset.idx = idx;
         bindRowEvents(row, idx);
     });
 
-    // Final grand total and count update after everything is loaded
     updateGrandTotalAndCount();
 
-    // Ctrl+Enter submit
-    document.addEventListener('keydown', e => {
-        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-            document.getElementById('saleForm').submit();
-        }
-    });
-
-    // Submit guard: at least one complete row
+    // Proteksi saat form mau dikirim ke backend Laravel
     document.getElementById('saleForm').addEventListener('submit', function(e) {
         const rows = document.querySelectorAll('.item-row');
         if (rows.length === 0) {
@@ -478,7 +479,7 @@
         });
         if (!valid) {
             e.preventDefault();
-            alert('Lengkapi semua kolom produk (Produk, Jumlah, Harga Jual).');
+            alert('Lengkapi semua data kolom produk terlebih dahulu!');
         }
     });
 </script>

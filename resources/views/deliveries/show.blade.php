@@ -65,27 +65,32 @@
         min-height: 40px; display: flex; align-items: center;
     }
 
-    /* Items table */
-    .items-header {
-        display: grid;
-        grid-template-columns: 1fr 100px 140px 130px;
-        gap: 10px; padding: 0 14px 8px;
-        border-bottom: 1px solid var(--border); margin-bottom: 10px;
-    }
+    /* ── Items table (Diubah kolomnya menjadi 5 agar muat Harga Jual) ── */
+.items-header {
+    display: grid;
+    grid-template-columns: 2fr 100px 160px 160px 180px;
+    gap: 12px;
+    padding: 0 14px 8px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 10px;
+}
     .items-header span {
         font-size: 10.5px; font-weight: 700; letter-spacing: 0.7px;
         text-transform: uppercase; color: var(--ink-muted);
     }
     .items-header span:not(:first-child) { text-align: right; }
 
-    .item-row {
-        display: grid;
-        grid-template-columns: 1fr 100px 140px 130px;
-        gap: 10px; align-items: center;
-        padding: 12px 14px;
-        background: var(--bg); border: 1px solid var(--border);
-        border-radius: var(--r-md); margin-bottom: 8px;
-    }
+.item-row {
+    display: grid;
+    grid-template-columns: 2fr 100px 160px 160px 180px;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    margin-bottom: 8px;
+}
 
     .item-product-name {
         font-size: 13.5px; font-weight: 500; color: var(--ink);
@@ -135,16 +140,20 @@
     }
     .btn-danger-outline:hover { background: #fee2e2; border-color: #fca5a5; }
 
-    @media (max-width: 640px) {
+    @media (max-width: 768px) {
         .items-header { display: none; }
         .item-row {
             grid-template-columns: 1fr 1fr;
-            grid-template-areas: "name name" "qty price" "subtotal subtotal";
+            grid-template-areas:
+                "name name"
+                "qty price"
+                "selling subtotal";
         }
         .item-row > *:first-child { grid-area: name; }
         .item-cell:nth-child(2) { grid-area: qty; text-align: left; }
         .item-cell:nth-child(3) { grid-area: price; }
-        .item-cell:nth-child(4) { grid-area: subtotal; font-size: 14px; }
+        .item-cell:nth-child(4) { grid-area: selling; text-align: left; color: var(--accent); }
+        .item-cell:nth-child(5) { grid-area: subtotal; font-size: 14px; }
     }
 </style>
 @endpush
@@ -214,8 +223,9 @@
         <div class="items-header d-none d-md-grid">
             <span>Produk</span>
             <span style="text-align:right;">Jumlah</span>
-            <span style="text-align:right;">Harga Satuan</span>
-            <span style="text-align:right;">Subtotal</span>
+            <span style="text-align:right;">Harga Modal awal</span>
+            <span style="text-align:right;">Harga Jual </span>
+            <span style="text-align:right;">Subtotal Modal</span>
         </div>
 
         @php $grandTotal = 0; @endphp
@@ -235,6 +245,10 @@
                 <div class="item-cell mono">
                     Rp {{ number_format($item->harga, 0, ',', '.') }}
                 </div>
+                {{-- 🌟 MENAMPILKAN HARGA JUAL BARU 🌟 --}}
+                <div class="item-cell mono" style="color: var(--accent);">
+                    Rp {{ number_format($item->harga_jual ?? 0, 0, ',', '.') }}
+                </div>
                 <div class="item-cell mono" style="font-weight:600; color:var(--ink);">
                     Rp {{ number_format($subtotal, 0, ',', '.') }}
                 </div>
@@ -244,7 +258,7 @@
         {{-- Grand Total --}}
         <div class="grand-total-bar">
             <div>
-                <div class="grand-total-label">Grand Total</div>
+                <div class="grand-total-label">Total Pengeluaran Modal</div>
                 <div class="grand-total-count">{{ $delivery->items->count() }} produk</div>
             </div>
             <div class="grand-total-value">
