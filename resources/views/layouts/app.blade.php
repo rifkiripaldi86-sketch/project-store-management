@@ -588,6 +588,16 @@
                         <span class="sb-label">Barang Rusak</span>
                     </a>
 
+                    <a class="sb-item {{ request()->routeIs('units.*') ? 'active' : '' }}" href="{{ route('units.index') }}">
+                       <span class="sb-icon"><i class="fas fa-scale-balanced"></i></span>
+                        <span class="sb-label">Satuan Barang</span>
+                    </a>
+
+                    <a class="sb-item {{ request()->routeIs('categories.*') ? 'active' : '' }}" href="{{ route('categories.index') }}">
+                        <span class="sb-icon"><i class="fas fa-tags"></i></span>
+                        <span class="sb-label">Kategori Produk</span>
+                    </a>
+
                     <div class="sb-section-label">Analitik</div>
 
                     <!-- Laporan -->

@@ -13,8 +13,9 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\DamagedController;
+use App\Http\Controllers\UnitController;
+use App\Http\Controllers\CategoryController;
 
-// Guest routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
@@ -67,4 +68,17 @@ Route::middleware('auth')->group(function () {
     [DeliveryController::class, 'getProductsBySupplier']
 )->name('deliveries.get-products');
 
+Route::get('/products/{id}/get-prices', function ($id) {
+    $product = \App\Models\Product::find($id);
+    return response()->json([
+        'harga_beli' => $product->harga_beli ?? 0,
+        'harga_jual' => $product->harga_jual ?? 0,
+    ]);
+})->name('products.get-prices');
+
+Route::resource('units', UnitController::class);
+Route::resource('categories', CategoryController::class);
+Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
+Route::post('/products', [ProductController::class, 'store'])->name('products.store');
 });

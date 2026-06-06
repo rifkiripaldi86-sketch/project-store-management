@@ -63,7 +63,7 @@
     .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     @media (max-width: 520px) { .field-row { grid-template-columns: 1fr; } }
 
-    /* ── Product item rows (Grid diubah jadi 5 kolom + 1 kolom hapus) ── */
+    /* Product item rows (5 kolom + 1 kolom hapus) */
     .items-header {
         display: grid;
         grid-template-columns: 1fr 100px 130px 130px 120px 36px;
@@ -271,14 +271,28 @@
 
 @push('scripts')
 <script>
-const PRODUCTS = @json($products->map(fn($p) => ['id' => $p->id, 'nama' => $p->nama_produk]));
+// 1. Ambil data produk dengan aman menggunakan json_encode murni
+const PRODUCTS = {!! json_encode($products->map(function($p) {
+    return [
+        'id' => $p->id,
+        'nama' => $p->nama_produk,
+        'harga_beli' => $p->harga_beli ?? 0,
+        'harga_jual' => $p->harga_jual ?? 0
+    ];
+})) !!};
+
+// 2. Ambil data old items dengan variabel penampung string kosong jika tidak ada data
+@if(old('items'))
+    const oldItems = {!! json_encode(old('items')) !!};
+@else
+    const oldItems = null;
+@endif
 
 let rowIndex = 0;
 let supplierProducts = [];
 
 const fmt = n => 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(n));
 
-/* Build product <options> string */
 function getProductOptions() {
     const data = supplierProducts.length ? supplierProducts : PRODUCTS;
     return data.map(product => `
@@ -312,12 +326,12 @@ function createRow(idx) {
         <div>
             <input type="number" name="items[${idx}][harga]"
                 class="form-control price-input"
-                placeholder="0" min="0" step="1" required>
+                placeholder="0" min="0" step="1" readonly style="background-color: #f1f5f9; cursor: not-allowed;" required>
         </div>
         <div>
             <input type="number" name="items[${idx}][harga_jual]"
                 class="form-control selling-price-input"
-                placeholder="0" min="0" step="1" required>
+                placeholder="0" min="0" step="1" readonly style="background-color: #f1f5f9; cursor: not-allowed;" required>
         </div>
         <div class="subtotal-display empty" id="subtotal-${idx}">—</div>
         <button type="button" class="btn-remove-row" title="Hapus baris">
@@ -325,15 +339,16 @@ function createRow(idx) {
         </button>
     `;
 
+    const productSelect     = row.querySelector('.product-select');
     const qtyInput          = row.querySelector('.qty-input');
     const priceInput        = row.querySelector('.price-input');
     const sellingPriceInput = row.querySelector('.selling-price-input');
     const subtotalEl        = row.querySelector(`#subtotal-${idx}`);
 
     function updateSubtotal() {
-        const qty   = parseFloat(qtyInput.value)   || 0;
-        const price = parseFloat(priceInput.value) || 0; // Menggunakan harga modal awal untuk subtotal
-        const sub   = qty * price;
+        const qty = parseFloat(qtyInput.value) || 0;
+        const price = parseFloat(priceInput.value) || 0;
+        const sub = qty * price;
         if (sub > 0) {
             subtotalEl.textContent = fmt(sub);
             subtotalEl.classList.remove('empty');
@@ -343,6 +358,22 @@ function createRow(idx) {
         }
         updateGrandTotal();
     }
+
+    productSelect.addEventListener('change', function() {
+        const selectedId = this.value;
+        const dataList = supplierProducts.length ? supplierProducts : PRODUCTS;
+        const matchProduct = dataList.find(p => p.id == selectedId);
+
+        if (matchProduct) {
+            priceInput.value = matchProduct.harga_beli ?? 0;
+            sellingPriceInput.value = matchProduct.harga_jual ?? 0;
+            if(!qtyInput.value) qtyInput.value = 1;
+        } else {
+            priceInput.value = '';
+            sellingPriceInput.value = '';
+        }
+        updateSubtotal();
+    });
 
     qtyInput.addEventListener('input', updateSubtotal);
     priceInput.addEventListener('input', updateSubtotal);
@@ -396,38 +427,20 @@ window.addEventListener('DOMContentLoaded', () => {
         const supplierId = this.value;
         supplierProducts = [];
 
-        if (!supplierId) {
-            document.querySelectorAll('.product-select').forEach(select => {
-                select.innerHTML = '<option value="">⚠️ Pilih Supplier Terlebih Dahulu</option>';
-                select.disabled = true;
-            });
-            return;
-        }
+        document.getElementById('items-wrapper').innerHTML = '';
+        updateGrandTotal();
+        updateRowCount();
+
+        if (!supplierId) return;
 
         try {
             const response = await fetch(`/deliveries/get-products/${supplierId}`);
             supplierProducts = await response.json();
-
-            document.querySelectorAll('.product-select').forEach(select => {
-                const currentVal = select.value;
-                select.innerHTML = '<option value="">— Pilih Produk —</option>';
-
-                supplierProducts.forEach(product => {
-                    select.innerHTML += `
-                        <option value="${product.id}">
-                            ${product.nama_produk}
-                        </option>
-                    `;
-                });
-                select.value = currentVal;
-                select.disabled = false;
-            });
+            addRow();
         } catch (error) {
             console.error('Gagal mengambil produk supplier:', error);
         }
     });
-
-    const oldItems = @json(old('items', []));
 
     if (oldItems && Object.keys(oldItems).length > 0) {
         Object.values(oldItems).forEach(item => {

@@ -4,18 +4,24 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes; // Sudah benar di sini
 
 class Product extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes; // Gabungkan trait di sini
 
-    protected $fillable = ['nama_produk', 'supplier_id', 'current_stock', 'harga_jual',];
+    protected $fillable = [
+        'nama_produk',
+        'supplier_id',
+        'current_stock',
+        'harga_jual',
+        'harga_beli',
+        'unit_id',
+        'category_id'
+    ];
 
     // ─── Relasi ────────────────────────────────────────────────
 
-    /**
-     * Setiap produk dimiliki oleh satu supplier.
-     */
     public function supplier()
     {
         return $this->belongsTo(Supplier::class);
@@ -36,10 +42,12 @@ class Product extends Model
         return $this->hasMany(DamagedItem::class);
     }
 
-    /**
-     * Relasi many-to-many tetap dipertahankan jika digunakan di tempat lain.
-     * Namun dengan adanya supplier_id, relasi primer sudah lewat belongsTo.
-     */
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class);
+        return $this->belongsTo(Unit::class);
+    }
+
     public function suppliers()
     {
         return $this->belongsToMany(Supplier::class)->withTimestamps();
@@ -47,10 +55,6 @@ class Product extends Model
 
     // ─── Business Logic ────────────────────────────────────────
 
-    /**
-     * Nama tampilan lengkap: "Tepung Terigu (PT Sumber Rezeki)"
-     * Berguna untuk dropdown atau label di UI.
-     */
     public function getDisplayNameAttribute(): string
     {
         $supplierLabel = $this->supplier?->nama_supplier ?? 'Tanpa Supplier';
@@ -65,5 +69,10 @@ class Product extends Model
 
         $this->current_stock = $totalIn - $totalOut - $totalDamaged;
         $this->saveQuietly();
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
     }
 }

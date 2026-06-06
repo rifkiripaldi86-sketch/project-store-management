@@ -20,7 +20,7 @@ class SupplierController extends Controller
 
     public function create()
     {
-        return view('suppliers.create');
+return view('suppliers.create');
     }
 
     /**
@@ -81,20 +81,19 @@ class SupplierController extends Controller
             ->with('success', 'Supplier berhasil ditambahkan.');
     }
 
-    public function show(Supplier $supplier)
-    {
-        // Produk milik supplier ini (by supplier_id — sumber kebenaran utama)
-        $supplierProducts = Product::where('supplier_id', $supplier->id)
-            ->orderBy('nama_produk')
-            ->get();
+public function show(Supplier $supplier)
+{
+    $supplier->load('products');
 
-        // Produk yang bisa di-assign (belum punya supplier)
-        $availableProducts = Product::whereNull('supplier_id')
-            ->orderBy('nama_produk')
-            ->get();
+    // Kirim $products agar tidak undefined di blade
+    $products = \App\Models\Product::all();
 
-        return view('suppliers.show', compact('supplier', 'supplierProducts', 'availableProducts'));
-    }
+    $availableProducts = Product::whereNull('supplier_id')
+        ->orderBy('nama_produk')
+        ->get();
+
+    return view('suppliers.show', compact('supplier', 'products', 'availableProducts'));
+}
 
     public function edit(Supplier $supplier)
     {
