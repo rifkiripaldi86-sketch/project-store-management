@@ -101,13 +101,13 @@
                 {{-- 5. HARGA BELI --}}
                 <div class="col-md-4 mb-4">
                     <label class="form-label">Harga Beli (Rp) <span class="required-star">*</span></label>
-                    <input type="number" name="harga_beli" value="{{ old('harga_beli') }}" class="form-control @error('harga_beli') is-invalid @enderror" min="0" required>
+                    <input type="number" name="harga_beli" value="{{ old('harga_beli') }}" class="form-control @error('harga_beli') is-invalid @enderror" min="0" step="1" placeholder="Contoh: 5000" required>
                 </div>
 
                 {{-- 6. HARGA JUAL --}}
                 <div class="col-md-4 mb-4">
                     <label class="form-label">Harga Jual (Rp) <span class="required-star">*</span></label>
-                    <input type="number" name="harga_jual" value="{{ old('harga_jual') }}" class="form-control @error('harga_jual') is-invalid @enderror" min="0" required>
+                    <input type="number" name="harga_jual" value="{{ old('harga_jual') }}" class="form-control @error('harga_jual') is-invalid @enderror" min="0" step="1" placeholder="Contoh: 7500" required>
                 </div>
             </div>
 

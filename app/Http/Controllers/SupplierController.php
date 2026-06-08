@@ -9,23 +9,28 @@ use Illuminate\Support\Facades\DB;
 
 class SupplierController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $search = $request->input('search');
+
         $suppliers = Supplier::withCount('products')
+            ->when($search, fn($q) =>
+                $q->where('nama_supplier', 'like', "%{$search}%")
+                  ->orWhere('telepon', 'like', "%{$search}%")
+                  ->orWhere('alamat', 'like', "%{$search}%")
+            )
             ->orderBy('nama_supplier')
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString(); // FIX: search parameter ikut ke link pagination
 
         return view('suppliers.index', compact('suppliers'));
     }
 
     public function create()
     {
-return view('suppliers.create');
+        return view('suppliers.create');
     }
 
-    /**
-     * Store supplier baru sekaligus membuat & attach produk yang disuplai.
-     */
     public function store(Request $request)
     {
         $products = collect($request->input('products', []))
@@ -58,17 +63,10 @@ return view('suppliers.create');
             $productIds = [];
 
             foreach ($validated['products'] ?? [] as $namaProduk) {
-                /*
-                 * firstOrCreate SCOPE PER SUPPLIER:
-                 * "Tepung Terigu" dari Supplier A → record baru
-                 * "Tepung Terigu" dari Supplier B → record baru yang berbeda
-                 * "Tepung Terigu" dari Supplier A lagi → pakai yang sudah ada
-                 */
                 $product = Product::firstOrCreate(
                     ['nama_produk' => $namaProduk, 'supplier_id' => $supplier->id],
                     ['current_stock' => 0]
                 );
-
                 $productIds[] = $product->id;
             }
 
@@ -81,19 +79,18 @@ return view('suppliers.create');
             ->with('success', 'Supplier berhasil ditambahkan.');
     }
 
-public function show(Supplier $supplier)
-{
-    $supplier->load('products');
+    public function show(Supplier $supplier)
+    {
+        $supplier->load('products.unit', 'products.category');
 
-    // Kirim $products agar tidak undefined di blade
-    $products = \App\Models\Product::all();
+        // FIX: hanya produk yang belum terdaftar di supplier ini
+        $attachedIds       = $supplier->products->pluck('id');
+        $availableProducts = Product::whereNotIn('id', $attachedIds)
+            ->orderBy('nama_produk')
+            ->get();
 
-    $availableProducts = Product::whereNull('supplier_id')
-        ->orderBy('nama_produk')
-        ->get();
-
-    return view('suppliers.show', compact('supplier', 'products', 'availableProducts'));
-}
+        return view('suppliers.show', compact('supplier', 'availableProducts'));
+    }
 
     public function edit(Supplier $supplier)
     {
@@ -116,9 +113,20 @@ public function show(Supplier $supplier)
 
     public function destroy(Supplier $supplier)
     {
-        if ($supplier->deliveries()->exists() || $supplier->supplierPayments()->exists()) {
+        // FIX: cek kiriman, pembayaran, DAN produk aktif
+        if ($supplier->deliveries()->exists()) {
             return redirect()->route('suppliers.index')
-                ->with('error', 'Supplier tidak bisa dihapus karena masih memiliki data kiriman atau pembayaran.');
+                ->with('error', 'Supplier tidak bisa dihapus karena masih memiliki data kiriman.');
+        }
+
+        if ($supplier->supplierPayments()->exists()) {
+            return redirect()->route('suppliers.index')
+                ->with('error', 'Supplier tidak bisa dihapus karena masih memiliki data pembayaran.');
+        }
+
+        if ($supplier->products()->exists()) {
+            return redirect()->route('suppliers.index')
+                ->with('error', 'Supplier tidak bisa dihapus karena masih memiliki produk terdaftar. Hapus atau pindahkan produk terlebih dahulu.');
         }
 
         $supplier->delete();
@@ -133,7 +141,6 @@ public function show(Supplier $supplier)
 
         $product = Product::findOrFail($request->product_id);
 
-        // Catat supplier_id jika produk belum punya supplier
         if (is_null($product->supplier_id)) {
             $product->update(['supplier_id' => $supplier->id]);
         }
@@ -152,7 +159,6 @@ public function show(Supplier $supplier)
     {
         $supplier->products()->detach($product->id);
 
-        // Lepas supplier_id jika produk ini memang milik supplier yang di-detach
         if ($product->supplier_id === $supplier->id) {
             $product->update(['supplier_id' => null]);
         }

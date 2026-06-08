@@ -242,7 +242,32 @@
                     @enderror
                 </div>
 
-                {{-- 3. SELECT SATUAN BARANG --}}
+                {{-- 3. SELECT KATEGORI --}}
+                <div class="col-md-6 mb-4">
+                    <label class="form-label">
+                        Kategori
+                        <span class="required-star">*</span>
+                    </label>
+
+                    <select name="category_id" class="form-select @error('category_id') is-invalid @enderror" required style="color: #1e293b;">
+                        <option value="" style="color: #1e293b;">— Pilih Kategori —</option>
+                        @foreach($categories as $cat)
+                            <option value="{{ $cat->id }}" {{ old('category_id', $product->category_id) == $cat->id ? 'selected' : '' }} style="color: #1e293b;">
+                                {{ $cat->nama_kategori }}
+                            </option>
+                        @endforeach
+                    </select>
+
+                    @error('category_id')
+                        <div class="invalid-feedback d-block">
+                            {{ $message }}
+                        </div>
+                    @enderror
+                </div>
+            </div>
+
+            <div class="row">
+                {{-- 4. SELECT SATUAN BARANG --}}
                 <div class="col-md-6 mb-4">
                     <label class="form-label">
                         Satuan Barang
@@ -280,6 +305,7 @@
                            placeholder="Contoh: 5000"
                            class="form-control @error('harga_beli') is-invalid @enderror"
                            min="0"
+                           step="1"
                            required>
 
                     @error('harga_beli')
@@ -302,6 +328,7 @@
                            placeholder="Contoh: 7500"
                            class="form-control @error('harga_jual') is-invalid @enderror"
                            min="0"
+                           step="1"
                            required>
 
                     @error('harga_jual')

@@ -53,12 +53,13 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nama_produk' => 'required|string|max:255',
-            'supplier_id' => 'required|exists:suppliers,id',
-            'category_id' => 'required|exists:categories,id',
-            'unit_id'     => 'required|exists:units,id',
-            'harga_jual'  => 'required|numeric',
-            'harga_beli'  => 'required|numeric',
+            'nama_produk'   => 'required|string|max:255',
+            'supplier_id'   => 'required|exists:suppliers,id',
+            'category_id'   => 'required|exists:categories,id',
+            'unit_id'       => 'required|exists:units,id',
+            'harga_jual'    => 'required|numeric|min:0',
+            'harga_beli'    => 'required|numeric|min:0',
+            'current_stock' => 'required|integer|min:0',
         ]);
 
         $existing = Product::withTrashed()
@@ -71,6 +72,15 @@ class ProductController extends Controller
             if ($existing->trashed()) {
 
                 $existing->restore();
+
+                // Update data produk yang dipulihkan dengan data baru
+                $existing->update([
+                    'category_id'   => $request->category_id,
+                    'unit_id'       => $request->unit_id,
+                    'harga_beli'    => (int) $request->harga_beli,
+                    'harga_jual'    => (int) $request->harga_jual,
+                    'current_stock' => (int) $request->current_stock,
+                ]);
 
                 return redirect()
                     ->route('products.index')
@@ -86,7 +96,15 @@ class ProductController extends Controller
             );
         }
 
-        Product::create($request->all());
+        Product::create([
+            'nama_produk'   => $request->nama_produk,
+            'supplier_id'   => $request->supplier_id,
+            'category_id'   => $request->category_id,
+            'unit_id'       => $request->unit_id,
+            'harga_beli'    => (int) $request->harga_beli,
+            'harga_jual'    => (int) $request->harga_jual,
+            'current_stock' => (int) $request->current_stock,
+        ]);
 
         return redirect()
             ->route('products.index')
@@ -110,15 +128,24 @@ class ProductController extends Controller
     public function update(Request $request, Product $product)
     {
         $request->validate([
-            'nama_produk' => 'required|string|max:255',
-            'supplier_id' => 'required|exists:suppliers,id',
-            'category_id' => 'required|exists:categories,id',
-            'unit_id'     => 'required|exists:units,id',
-            'harga_jual'  => 'required|numeric',
-            'harga_beli'  => 'required|numeric',
+            'nama_produk'   => 'required|string|max:255',
+            'supplier_id'   => 'required|exists:suppliers,id',
+            'category_id'   => 'required|exists:categories,id',
+            'unit_id'       => 'required|exists:units,id',
+            'harga_jual'    => 'required|numeric|min:0',
+            'harga_beli'    => 'required|numeric|min:0',
+            'current_stock' => 'required|integer|min:0',
         ]);
 
-        $product->update($request->all());
+        $product->update([
+            'nama_produk'   => $request->nama_produk,
+            'supplier_id'   => $request->supplier_id,
+            'category_id'   => $request->category_id,
+            'unit_id'       => $request->unit_id,
+            'harga_beli'    => (int) $request->harga_beli,
+            'harga_jual'    => (int) $request->harga_jual,
+            'current_stock' => (int) $request->current_stock,
+        ]);
 
         return redirect()
             ->route('products.index')
