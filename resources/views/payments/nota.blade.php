@@ -4,158 +4,85 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nota Supplier - {{ $payment->supplier->nama_supplier }}</title>
-    <style>
-        /* ═══════════════════════════════════════════════
-           THERMAL PRINT — dual-size support
-           58mm  → @media print applies 58mm page width
-           80mm  → default (no override needed for 80mm)
-        ═══════════════════════════════════════════════ */
+<style>
+    /* ─── Base Reset ─── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 10px;
+        width: 80mm;
+        margin: 0 auto;
+        padding: 4mm 3mm;
+        background: #fff;
+        color: #000;
+    }
 
-        body {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 10px;
-            width: 80mm;
-            margin: 0 auto;
-            padding: 4mm 3mm;
-            background: #fff;
-            color: #000;
-        }
+    /* ─── Responsive preview (hanya di layar) ─── */
+    @media screen {
+        body { margin: 20px auto; border: 1px dashed #ccc; border-radius: 4px; }
+        .size-toggle { display: flex; justify-content: center; gap: 8px; margin-bottom: 12px; font-family: sans-serif; }
+    }
 
-        /* ─── Responsive preview di layar ─── */
-        @media screen {
-            body {
-                margin: 20px auto;
-                border: 1px dashed #ccc;
-                border-radius: 4px;
-            }
-            .size-toggle {
-                display: flex;
-                justify-content: center;
-                gap: 8px;
-                margin-bottom: 12px;
-                font-family: sans-serif;
-            }
-        }
+    /* ─── Print 80mm (Default) ─── */
+    @media print {
+        @page { size: 80mm auto; margin: 0; }
+        body { width: 80mm; padding: 3mm; }
+        .no-print { display: none !important; }
+    }
 
-        /* ─── Print: 80mm (default) ─── */
-        @media print {
-            @page { size: 80mm auto; margin: 0; }
-            body   { width: 80mm; padding: 3mm 3mm; margin: 0; }
-            .no-print { display: none !important; }
-        }
+    /* ─── Print 58mm Override ─── */
+    body.size-58mm { width: 58mm; font-size: 8px; }
+    @media print {
+        body.size-58mm { @page { size: 58mm auto; margin: 0; } width: 58mm; }
+    }
 
-        /* ─── Print: 58mm override (ditambah class via JS) ─── */
-        body.size-58mm { width: 58mm; font-size: 9px; }
-        @media print {
-            body.size-58mm { @page { size: 58mm auto; margin: 0; } width: 58mm; }
-        }
+    /* ─── Layout Tabel (Kunci Perbaikan) ─── */
+    table {
+        width: 100%;
+        table-layout: fixed; /* Memaksa tabel tidak melar keluar */
+        border-collapse: collapse;
+        font-size: 8.5px;
+        margin: 4px 0;
+    }
 
-        /* ─── Header ─── */
-        .header { text-align: center; margin-bottom: 4px; }
-        .header h3 {
-            font-size: 13px;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 2px;
-        }
-        .header p { font-size: 9px; line-height: 1.4; }
+    th, td {
+        padding: 2px 1px;
+        text-align: center;
+        overflow-wrap: break-word; /* Memecah kata panjang */
+        word-wrap: break-word;
+    }
 
-        /* ─── Dividers ─── */
-        .div-solid  { border-top: 1px solid #000; margin: 4px 0; }
-        .div-dashed { border-top: 1px dashed #000; margin: 4px 0; }
+    /* Porsi Kolom: Nama Produk dapat ruang paling besar */
+    .nama { width: 35%; text-align: left; }
+    th:not(.nama), td:not(.nama) { width: 13%; }
 
-        /* ─── Info section ─── */
-        .info { font-size: 9.5px; margin-bottom: 2px; line-height: 1.5; }
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-        }
+    thead tr { border-top: 1px solid #000; border-bottom: 1px solid #000; }
+    tbody tr:last-child { border-bottom: 1px solid #000; }
+    .num { text-align: right; }
 
-        /* ─── Table ─── */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 8.5px;
-        }
-        thead tr {
-            border-top: 1px solid #000;
-            border-bottom: 1px solid #000;
-        }
-        tbody tr:last-child { border-bottom: 1px solid #000; }
-        th, td {
-            padding: 2px 1px;
-            text-align: center;
-            white-space: nowrap;
-            vertical-align: middle;
-        }
-        th { font-weight: bold; }
-        td.nama, th.nama {
-            text-align: left;
-            white-space: normal;
-            min-width: 20mm;
-            max-width: 24mm;
-            word-break: break-word;
-            line-height: 1.25;
-        }
-        td.num, th.num { text-align: right; }
+    /* ─── Header & Info ─── */
+    .header { text-align: center; margin-bottom: 4px; }
+    .header h3 { font-size: 13px; font-weight: bold; text-transform: uppercase; }
+    .info { font-size: 9px; line-height: 1.4; }
+    .div-solid { border-top: 1px solid #000; margin: 4px 0; }
+    .div-dashed { border-top: 1px dashed #000; margin: 4px 0; }
 
-        /* 58mm: sempitkan kolom nama */
-        body.size-58mm td.nama,
-        body.size-58mm th.nama { min-width: 14mm; max-width: 17mm; font-size: 8px; }
+    /* ─── Footer ─── */
+    .footer { font-size: 9px; }
+    .footer-row { display: flex; justify-content: space-between; margin: 1px 0; }
+    .bold-total { font-weight: bold; font-size: 11px; margin-top: 2px; }
 
-        /* ─── Footer totals ─── */
-        .footer { font-size: 9px; }
-        .footer-row {
-            display: flex;
-            justify-content: space-between;
-            margin: 1px 0;
-        }
-        .footer-row.bold-total {
-            font-weight: bold;
-            font-size: 11px;
-        }
+    /* ─── Signature & Others ─── */
+    .signature { margin-top: 10px; display: flex; justify-content: space-between; font-size: 9px; }
+    .sig-line { margin-top: 12mm; border-top: 1px solid #000; }
 
-        /* ─── Printed line ─── */
-        .printed-line { margin-top: 4px; font-size: 8.5px; }
-        .printed-inner { display: flex; justify-content: space-between; }
-
-        /* ─── Signature ─── */
-        .signature {
-            margin-top: 12px;
-            display: flex;
-            justify-content: space-between;
-            font-size: 9px;
-        }
-        .signature div { text-align: center; width: 33%; }
-        .sig-line {
-            margin-top: 14mm;
-            border-top: 1px solid #000;
-            padding-top: 2px;
-        }
-
-        /* ─── Buttons (screen only) ─── */
-        .no-print { text-align: center; margin-top: 16px; font-family: sans-serif; }
-        .btn {
-            display: inline-block;
-            padding: 7px 18px;
-            margin: 0 4px;
-            font-size: 13px;
-            border-radius: 5px;
-            cursor: pointer;
-            border: none;
-            text-decoration: none;
-        }
-        .btn-primary   { background: #0d6efd; color: #fff; }
-        .btn-secondary { background: #6c757d; color: #fff; }
-        .btn-outline   {
-            background: #fff; color: #333;
-            border: 1px solid #ccc;
-        }
-    </style>
+    /* ─── Buttons ─── */
+    .no-print { text-align: center; margin-top: 16px; font-family: sans-serif; }
+    .btn { padding: 7px 18px; border-radius: 5px; cursor: pointer; border: none; }
+    .btn-primary { background: #0d6efd; color: #fff; }
+    .btn-outline { background: #fff; border: 1px solid #ccc; }
+</style>
 </head>
 <body id="notaBody">
 
@@ -189,18 +116,17 @@
 
     <div class="div-solid"></div>
 
-    {{-- ═══ TABEL DETAIL ═══ --}}
+    {{-- ═══ TABEL DETAIL PENJUALAN ═══ --}}
     @php
-        $grandKirim         = 0;
-        $grandLaku          = 0;
+        $grandKirim = 0;
+        $grandLaku = 0;
         $grandBayarSupplier = 0;
-        $grandPendapatan    = 0;
     @endphp
 
     <table>
         <thead>
             <tr>
-                <th style="width:9px;">Tgl</th>
+                <th>Tgl</th>
                 <th class="nama">Barang</th>
                 <th>Krm</th>
                 <th>Laku</th>
@@ -210,22 +136,22 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($details as $tanggal => $items)
-                @foreach($items as $item)
+            @foreach($groupedDetails as $tanggal => $items)
+                @foreach($items as $row)
                     @php
-                        $grandKirim         += $item['kirim'];
-                        $grandLaku          += $item['laku'];
-                        $grandBayarSupplier += $item['bayar_supplier'];
-                        $grandPendapatan    += $item['pendapatan'];
+                        // Akumulasi perhitungan
+                        $grandKirim += $row['kirim'];
+                        $grandLaku += $row['laku'];
+                        $grandBayarSupplier += $row['bayar_supplier'];
                     @endphp
                     <tr>
-                        <td>{{ \Carbon\Carbon::parse($tanggal)->format('d') }}</td>
-                        <td class="nama">{{ $item['nama_produk'] }}</td>
-                        <td>{{ $item['kirim'] }}</td>
-                        <td>{{ $item['laku'] }}</td>
-                        <td>{{ $item['sisa'] }}</td>
-                        <td class="num">{{ number_format($item['harga_beli'], 0, ',', '.') }}</td>
-                        <td class="num">{{ number_format($item['bayar_supplier'], 0, ',', '.') }}</td>
+                        <td>{{ \Carbon\Carbon::parse($tanggal)->format('d/m') }}</td>
+                        <td class="nama">{{ $row['nama_produk'] }}</td>
+                        <td>{{ $row['kirim'] }}</td>
+                        <td>{{ $row['laku'] }}</td>
+                        <td>{{ $row['sisa'] }}</td>
+                        <td class="num">{{ number_format($row['harga_beli'], 0, ',', '.') }}</td>
+                        <td class="num">{{ number_format($row['bayar_supplier'], 0, ',', '.') }}</td>
                     </tr>
                 @endforeach
             @endforeach

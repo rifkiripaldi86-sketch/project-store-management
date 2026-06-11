@@ -137,33 +137,34 @@ public function store(Request $request)
         return view('deliveries.show', compact('delivery'));
     }
 
-    public function destroy(Delivery $delivery)
-    {
-        $delivery->load('items.product');
+public function destroy($id)
+{
+    $delivery = \App\Models\Delivery::find($id);
 
-        // Cek apakah stok mencukupi untuk rollback
+    if (!$delivery) {
+        return back()->with('error', 'Data tidak ditemukan.');
+    }
+
+    DB::transaction(function () use ($delivery) {
+        // 1. Hapus relasi di tabel supplier_payment_details terlebih dahulu
+        // Ini akan memutus hubungan nota dengan pembayaran
+        \App\Models\SupplierPaymentDetail::where('delivery_id', $delivery->id)->delete();
+
+        // 2. Balikkan stok (seperti kode sebelumnya)
         foreach ($delivery->items as $item) {
-            if ($item->product->current_stock < $item->jumlah_kirim) {
-                return redirect()
-                    ->route('deliveries.index')
-                    ->with(
-                        'error',
-                        "Tidak bisa hapus: stok {$item->product->nama_produk} tidak mencukupi untuk dikurangi (tersedia: {$item->product->current_stock}, dibutuhkan: {$item->jumlah_kirim})."
-                    );
+            if ($item->product) {
+                $item->product->current_stock -= $item->jumlah_kirim;
+                $item->product->save();
             }
         }
 
-        DB::transaction(function () use ($delivery) {
-            foreach ($delivery->items as $item) {
-                Product::where('id', $item->product_id)
-                    ->decrement('current_stock', $item->jumlah_kirim);
-            }
+        // 3. Hapus item
+        $delivery->items()->delete();
 
-            $delivery->delete();
-        });
+        // 4. Hapus nota
+        $delivery->delete();
+    });
 
-        return redirect()
-            ->route('deliveries.index')
-            ->with('success', 'Data kiriman berhasil dihapus.');
-    }
+    return back()->with('success', 'Kiriman dan data pembayaran terkait berhasil dihapus.');
+}
 }

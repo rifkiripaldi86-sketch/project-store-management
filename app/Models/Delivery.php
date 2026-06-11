@@ -27,4 +27,9 @@ class Delivery extends Model
     {
         return $this->hasMany(DeliveryItem::class);
     }
+    public function product()
+{
+    // Sesuaikan 'product_id' jika nama kolom di tabel deliveries berbeda
+    return $this->belongsTo(Product::class, 'product_id');
+}
 }

@@ -103,7 +103,7 @@ class ProductController extends Controller
             'unit_id'       => $request->unit_id,
             'harga_beli'    => (int) $request->harga_beli,
             'harga_jual'    => (int) $request->harga_jual,
-            'current_stock' => (int) $request->current_stock,
+            'current_stock' => (int) $request->current_stock, // Cukup tulis sekali
         ]);
 
         return redirect()

@@ -409,7 +409,15 @@
         // Isi otomatis opsi produk sesuai supplier yang aktif pada baris baru ini
         const select = newRow.querySelector('.product-select');
         populateProductOptions(select, supplierId);
-
+        PRODUCTS.forEach(product => {
+                if (product.supplier_id == supplierId) {
+                    // Tambahkan data-harga di sini
+                    options += `<option value="${product.id}" data-stok="${product.stok}" data-harga="${product.harga_jual}">
+                        ${product.nama_produk} (Stok: ${product.stok})
+                    </option>`;
+                    hasProducts = true;
+                }
+            });
         updateGrandTotalAndCount();
     }
 
@@ -457,6 +465,19 @@
     // Jalankan binding untuk baris default pertama kali load
     document.querySelectorAll('.item-row').forEach((row, idx) => {
         bindRowEvents(row, idx);
+        const select = row.querySelector('.product-select');
+        const priceInput = row.querySelector('.price-input');
+        select.addEventListener('change', () => {
+    const opt = select.selectedOptions[0];
+    const harga = opt?.dataset?.harga || 0;
+
+    // Isi otomatis input harga agar tidak kosong saat disubmit
+    priceInput.value = harga;
+
+    // ... (update stok hint & subtotal)
+    updateRowSubtotal(row);
+    updateGrandTotalAndCount();
+});
     });
 
     updateGrandTotalAndCount();

@@ -14,72 +14,44 @@ use Carbon\Carbon;
 
 class ReportController extends Controller
 {
-    private function getSupplierReport(int $supplierId, Carbon $start, Carbon $end): array
-    {
-        // Ambil semua produk milik supplier ini beserta riwayat pengirimannya
-        $products = Product::where('supplier_id', $supplierId)
-            ->with(['deliveryItems' => function ($q) {
-                $q->with('delivery')->orderByDesc('id');
-            }])
-            ->get();
+private function getSupplierReport(int $supplierId, Carbon $start, Carbon $end): array
+{
+    // Ambil data produk
+    $products = Product::where('supplier_id', $supplierId)->get();
 
-        $rows = [];
-        $no   = 1;
+    $rows = [];
+    $no = 1;
 
-        foreach ($products as $product) {
-            $lastDeliveryItem = $product->deliveryItems->first();
+    foreach ($products as $product) {
+        // GANTI DI SINI: Gunakan 'current_stock' sesuai nama kolom database
+        $stok = $product->current_stock ?? 0;
 
-            // Ambil harga beli master sebagai cadangan jika data riwayat kiriman kosong
-            $hargaBeli = $lastDeliveryItem?->harga ?? ($product->harga_beli ?? 0);
+        // Hitung produk laku pada rentang tanggal
+        $laku = SaleItem::where('product_id', $product->id)
+            ->whereHas('sale', fn($q) => $q->whereBetween('tanggal', [$start, $end]))
+            ->sum('laku');
 
-            // Tentukan tanggal referensi tampilan laporan
-            $tanggal = $lastDeliveryItem?->delivery?->tanggal
-                ? Carbon::parse($lastDeliveryItem->delivery->tanggal)->format('d/m/Y')
-                : $start->format('d/m/Y');
+        // Jika tidak ada stok dan tidak ada penjualan, jangan tampilkan di laporan
+        if ($stok == 0 && $laku == 0) continue;
 
-            // Total stok dikirim dari supplier s.d. tanggal laporan
-            $stok = $product->deliveryItems()
-                ->whereHas('delivery', fn($q) => $q
-                    ->where('supplier_id', $supplierId)
-                    ->whereDate('tanggal', '<=', $end))
-                ->sum('jumlah_kirim');
+        // Ambil harga
+        $hargaJual = SaleItem::where('product_id', $product->id)
+            ->whereHas('sale', fn($q) => $q->whereBetween('tanggal', [$start, $end]))
+            ->value('harga_jual') ?? ($product->harga_jual ?? 0);
 
-            // --- FIX HARGA JUAL: Ambil dari master produk jika belum ada transaksi hari ini ---
-            $hargaJual = SaleItem::where('product_id', $product->id)
-                ->whereHas('sale', fn($q) => $q->whereBetween('tanggal', [$start, $end]))
-                ->value('harga_jual') ?? ($product->harga_jual ?? 0);
-
-            // Total produk laku terjual pada rentang tanggal pilihan
-            $laku = SaleItem::where('product_id', $product->id)
-                ->whereHas('sale', fn($q) => $q->whereBetween('tanggal', [$start, $end]))
-                ->sum('laku');
-
-            // Jika stok tidak ada dan tidak laku, lewati produk ini agar laporan bersih
-            if ($stok == 0 && $laku == 0) {
-                continue;
-            }
-
-            // Hitung sisa stok, total pendapatan, dan keuntungan bersih supplier
-            $sisa      = max(0, $stok - $laku);
-            $penjualan = $hargaJual * $laku;
-            $laba      = ($hargaJual - $hargaBeli) * $laku;
-
-            $rows[] = [
-                'no'        => $no++,
-                'tanggal'   => $tanggal,
-                'produk'    => $product->nama_produk,
-                'hargaBeli' => $hargaBeli,
-                'hargaJual' => $hargaJual,
-                'stok'      => $stok,
-                'laku'      => $laku,
-                'sisa'      => $sisa,
-                'penjualan' => $penjualan,
-                'laba'      => $laba,
-            ];
-        }
-
-        return $rows;
+        $rows[] = [
+            'no'        => $no++,
+            'tanggal'   => $end->format('d/m/Y'),
+            'produk'    => $product->nama_produk,
+            'hargaBeli' => $product->harga_beli ?? 0,
+            'stok'      => $stok, // Sekarang akan muncul 102
+            'laku'      => $laku,
+            'sisa'      => max(0, $stok - $laku),
+            'penjualan' => $hargaJual * $laku,
+        ];
     }
+    return $rows;
+}
 
 public function daily(Request $request)
     {

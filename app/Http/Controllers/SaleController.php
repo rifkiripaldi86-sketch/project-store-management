@@ -13,11 +13,16 @@ use Illuminate\Validation\ValidationException;
 
 class SaleController extends Controller
 {
-    public function index()
-    {
-        $sales = Sale::with('createdBy')->latest()->paginate(10);
-        return view('sales.index', compact('sales'));
-    }
+public function index()
+{
+    // Ambil data penjualan dengan pagination
+    $sales = Sale::with('createdBy')->latest()->paginate(10);
+
+    // Hitung total pendapatan dari SEMUA transaksi
+    $totalPendapatan = Sale::sum('total_bayar');
+
+    return view('sales.index', compact('sales', 'totalPendapatan'));
+}
 
     public function create(\Illuminate\Http\Request $request)
     {
@@ -42,83 +47,75 @@ class SaleController extends Controller
         return view('sales.create', compact('products', 'suppliers', 'products_json'));
     }
 
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'tanggal'                => 'required|date',
-            'items'                  => 'required|array|min:1',
-            'items.*.product_id'     => 'required|exists:products,id',
-            'items.*.laku'           => 'required|integer|min:1',
-            'items.*.harga_jual'     => 'required|integer|min:0',
+public function store(Request $request)
+{
+    $validated = $request->validate([
+        'tanggal' => 'required|date',
+        'items'   => 'required|array|min:1',
+        'items.*.product_id' => 'required|exists:products,id',
+        'items.*.laku'       => 'required|integer|min:1',
+        'items.*.harga_jual' => 'required|numeric|min:0', // Pastikan input ini dikirim dari form
+    ]);
+
+    DB::transaction(function () use ($validated) {
+        // 1. Buat data penjualan awal
+        $sale = Sale::create([
+            'tanggal' => $validated['tanggal'],
+            'total_bayar' => 0,
+            'created_by' => auth()->id()
         ]);
 
-        foreach ($validated['items'] as $key => $item) {
-            $product = Product::find($item['product_id']);
-            if (!$product) {
-                throw ValidationException::withMessages([
-                    "items.$key.product_id" => 'Produk tidak ditemukan.',
-                ]);
-            }
-            if ($product->current_stock < $item['laku']) {
-                throw ValidationException::withMessages([
-                    "items.$key.laku" => "Stok {$product->nama_produk} tidak mencukupi (tersedia: {$product->current_stock}).",
-                ]);
-            }
+        $totalBayar = 0; // Inisialisasi awal
+
+        foreach ($validated['items'] as $item) {
+            $product = Product::findOrFail($item['product_id']);
+            $laku = (int) $item['laku'];
+            $harga = (float) $item['harga_jual']; // Ambil harga yang diketik kasir
+            $subTotal = $laku * $harga;
+
+            // 2. Simpan item penjualan
+            SaleItem::create([
+                'sale_id'    => $sale->id,
+                'product_id' => $product->id,
+                'laku'       => $laku,
+                'harga_jual' => $harga,
+                'sub_total'  => $subTotal,
+            ]);
+
+            // 3. Update total bayar secara bertahap
+            $totalBayar += $subTotal;
+
+            // 4. Kurangi stok
+            $product->decrement('current_stock', $laku);
         }
 
-        DB::transaction(function () use ($validated) {
-            $sale = Sale::create([
-                'tanggal'     => $validated['tanggal'],
-                'total_bayar' => 0,
-                'created_by'  => auth()->id(),
-            ]);
+        // 5. Update total_bayar yang asli ke tabel sales
+        $sale->update(['total_bayar' => $totalBayar]);
 
-            $totalBayar = 0;
+        // 6. Catat arus kas
+        CashFlow::create([
+            'tanggal'    => $validated['tanggal'],
+            'tipe'       => 'masuk',
+            'kategori'   => 'penjualan',
+            'keterangan' => "Penjualan #{$sale->id}",
+            'jumlah'     => $totalBayar,
+            'sale_id'    => $sale->id,
+            'created_by' => auth()->id()
+        ]);
+    });
 
-            foreach ($validated['items'] as $item) {
-                $hargaJual  = (int) $item['harga_jual'];
-                $laku       = (int) $item['laku'];
-                $subtotal   = $laku * $hargaJual;
-                $totalBayar += $subtotal;
+    return redirect()->route('sales.index')->with('success', 'Penjualan tersimpan!');
+}
+public function show(Sale $sale)
+{
+    // Pastikan load relasi itemnya
+    $sale->load('items.product');
 
-                SaleItem::create([
-                    'sale_id'    => $sale->id,
-                    'product_id' => $item['product_id'],
-                    'laku'       => $laku,
-                    'harga_jual' => $hargaJual,
-                    'sub_total'  => $subtotal,
-                ]);
+    // Kirim ke view, kalau butuh $details, namakan $details
+    $details = $sale->items;
 
-                Product::where('id', $item['product_id'])
-                    ->decrement('current_stock', $laku);
-            }
-
-            $sale->update(['total_bayar' => $totalBayar]);
-
-            // [BUG #1 FIX] Kas masuk dicatat HANYA di sini saat penjualan terjadi.
-            // PaymentController TIDAK boleh membuat kas masuk "keuntungan_penjualan" lagi.
-            // [BUG #4 FIX] Simpan sale_id agar penghapusan kas bisa pakai relasi,
-            // bukan string-matching yang rapuh.
-            CashFlow::create([
-                'tanggal'    => $validated['tanggal'],
-                'tipe'       => 'masuk',
-                'kategori'   => 'penjualan',
-                'keterangan' => "Penjualan #{$sale->id}",
-                'jumlah'     => $totalBayar,
-                'sale_id'    => $sale->id,
-                'created_by' => auth()->id(),
-            ]);
-        });
-
-        return redirect()->route('sales.index')->with('success', 'Penjualan berhasil dicatat.');
-    }
-
-    public function show(Sale $sale)
-    {
-        $sale->load('items.product');
-        return view('sales.show', compact('sale'));
-    }
-
+    return view('sales.show', compact('sale', 'details'));
+}
     public function destroy(Sale $sale)
     {
         $sale->load('items');
