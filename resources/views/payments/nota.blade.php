@@ -106,12 +106,12 @@
         <div class="info-row">
             <span>
                 Periode :
-                {{ \Carbon\Carbon::parse($payment->periode_awal)->format('d/m/Y') }}
+                <span class="tgl-sistem" data-date="{{ \Carbon\Carbon::parse($payment->periode_awal)->toDateString() }}"></span>
                 s/d
-                {{ \Carbon\Carbon::parse($payment->periode_akhir)->format('d/m/Y') }}
+                <span class="tgl-sistem" data-date="{{ \Carbon\Carbon::parse($payment->periode_akhir)->toDateString() }}"></span>
             </span>
         </div>
-        <div>Dicetak  : {{ now()->format('d/m/Y H:i') }}</div>
+        <div>Dicetak  : <span class="tgl-sistem" data-datetime="{{ now()->toIso8601String() }}"></span></div>
     </div>
 
     <div class="div-solid"></div>
@@ -145,7 +145,7 @@
                         $grandBayarSupplier += $row['bayar_supplier'];
                     @endphp
                     <tr>
-                        <td>{{ \Carbon\Carbon::parse($tanggal)->format('d/m') }}</td>
+                        <td><span class="tgl-sistem-short" data-date="{{ $tanggal }}"></span></td>
                         <td class="nama">{{ $row['nama_produk'] }}</td>
                         <td>{{ $row['kirim'] }}</td>
                         <td>{{ $row['laku'] }}</td>
@@ -210,6 +210,23 @@
 
 </body>
 <script>
+    // ─── Format tanggal mengikuti locale/sistem komputer user ───
+    document.querySelectorAll('.tgl-sistem').forEach(el => {
+        if (el.dataset.date) {
+            const d = new Date(el.dataset.date + 'T00:00:00');
+            el.textContent = d.toLocaleDateString();
+        } else if (el.dataset.datetime) {
+            const d = new Date(el.dataset.datetime);
+            el.textContent = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+    });
+
+    // Versi singkat untuk kolom tabel (tgl/bln saja, ikut urutan locale)
+    document.querySelectorAll('.tgl-sistem-short').forEach(el => {
+        const d = new Date(el.dataset.date + 'T00:00:00');
+        el.textContent = d.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' });
+    });
+
     // Pilih ukuran thermal (58mm / 80mm) sebelum cetak
     function setSize(mm) {
         const body = document.getElementById('notaBody');
