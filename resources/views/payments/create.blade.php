@@ -3,7 +3,6 @@
 
 @push('styles')
 <style>
-    /* Header */
     .page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
     .back-btn {
         width: 34px; height: 34px; border: 1px solid var(--border); border-radius: var(--r-sm);
@@ -18,7 +17,6 @@
     }
     .page-header p { font-size: 13px; color: var(--ink-muted); margin: 0; }
 
-    /* Form card */
     .form-card {
         background: var(--surface); border: 1px solid var(--border);
         border-radius: var(--r-xl); box-shadow: var(--shadow-sm); overflow: hidden;
@@ -36,7 +34,6 @@
     .form-card-header-text h5 { font-size: 15px; font-weight: 700; color: var(--ink); margin: 0 0 2px; }
     .form-card-header-text p  { font-size: 12px; color: var(--ink-muted); margin: 0; }
 
-    /* Form fields */
     .form-body { padding: 26px 28px; }
     .section-title {
         font-size: 12px; font-weight: 700; letter-spacing: 0.8px;
@@ -50,6 +47,11 @@
         display: flex; align-items: center; gap: 4px;
     }
     .field-label .required { color: #ef4444; }
+    .field-label .optional {
+        font-size: 11px; font-weight: 400; color: var(--ink-muted);
+        background: var(--bg); border: 1px solid var(--border);
+        border-radius: 4px; padding: 1px 6px; margin-left: 4px;
+    }
     .form-control, .form-select {
         border: 1px solid var(--border); border-radius: var(--r-sm);
         font-size: 13.5px; color: var(--ink); padding: 9px 13px; height: auto;
@@ -60,10 +62,10 @@
     }
     .form-control.is-invalid, .form-select.is-invalid { border-color: #ef4444; }
     .invalid-feedback { font-size: 12px; color: #dc2626; margin-top: 4px; display: block; }
+    .field-hint { font-size: 11.5px; color: var(--ink-muted); margin-top: 4px; }
     .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     @media (max-width: 520px) { .field-row { grid-template-columns: 1fr; } }
 
-    /* Info box */
     .info-box {
         background: var(--accent-soft); border: 1px solid rgba(29,78,216,0.15);
         border-radius: var(--r-md); padding: 14px 16px;
@@ -72,7 +74,6 @@
     .info-box i { color: var(--accent); margin-top: 1px; font-size: 13px; flex-shrink: 0; }
     .info-box p { font-size: 12.5px; color: var(--ink-soft); margin: 0; line-height: 1.6; }
 
-    /* Footer */
     .form-footer {
         padding: 16px 28px; border-top: 1px solid var(--border);
         background: var(--bg); display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
@@ -88,14 +89,13 @@
 
 @section('content')
 
-{{-- Header --}}
 <div class="page-header animate-in">
     <a href="{{ route('dashboard') }}" class="back-btn" title="Kembali">
         <i class="fas fa-arrow-left"></i>
     </a>
     <div>
         <h1>Pembayaran Supplier</h1>
-        <p>Hitung & catat pembayaran mingguan ke supplier</p>
+        <p>Hitung & catat pembayaran ke supplier</p>
     </div>
 </div>
 
@@ -112,9 +112,25 @@
         <form method="POST" action="{{ route('payments.store') }}" id="paymentForm">
             @csrf
 
+            {{-- Nama Toko --}}
+            <div class="section-title">Identitas Nota</div>
+            <div class="field-group" style="margin-bottom:24px;">
+                <label class="field-label" for="nama_toko">
+                    Nama Toko <span class="optional">opsional</span>
+                </label>
+                <input type="text" name="nama_toko" id="nama_toko"
+                    class="form-control @error('nama_toko') is-invalid @enderror"
+                    value="{{ old('nama_toko') }}"
+                    placeholder="{{ $defaultStoreName }}">
+                <span class="field-hint">
+                    Kosongkan untuk memakai nama default: <strong>{{ $defaultStoreName }}</strong>
+                </span>
+                @error('nama_toko')<span class="invalid-feedback">{{ $message }}</span>@enderror
+            </div>
+
             {{-- Supplier --}}
             <div class="section-title">Informasi Supplier</div>
-            <div class="field-group" style="margin-bottom: 24px;">
+            <div class="field-group" style="margin-bottom:24px;">
                 <label class="field-label" for="supplier_id">
                     Supplier <span class="required">*</span>
                 </label>
@@ -157,8 +173,9 @@
             <div class="info-box">
                 <i class="fas fa-circle-info"></i>
                 <p>
-                    Sistem akan menghitung total bayar supplier berdasarkan data kiriman dan penjualan
-                    pada periode yang dipilih. Nota pembayaran akan otomatis dicetak setelah disimpan.
+                    Sistem menghitung total bayar berdasarkan kiriman & penjualan pada periode yang dipilih.
+                    Jika penjualan melebihi kiriman, sisa dihitung 0 (tidak minus).
+                    Nota pembayaran otomatis dicetak setelah disimpan.
                 </p>
             </div>
 

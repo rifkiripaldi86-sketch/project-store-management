@@ -5,251 +5,491 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nota Supplier - {{ $payment->supplier->nama_supplier }}</title>
 <style>
-    /* ─── Base Reset ─── */
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
         font-family: 'Courier New', Courier, monospace;
-        font-size: 10px;
+        font-size: 11px;
         width: 80mm;
         margin: 0 auto;
-        padding: 4mm 3mm;
+        padding: 5mm 4mm;
         background: #fff;
         color: #000;
+        line-height: 1.45;
     }
 
-    /* ─── Responsive preview (hanya di layar) ─── */
     @media screen {
-        body { margin: 20px auto; border: 1px dashed #ccc; border-radius: 4px; }
-        .size-toggle { display: flex; justify-content: center; gap: 8px; margin-bottom: 12px; font-family: sans-serif; }
+        body {
+            margin: 30px auto;
+            border: 1px dashed #ccc;
+            border-radius: 6px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
     }
 
-    /* ─── Print 80mm (Default) ─── */
     @media print {
         @page { size: 80mm auto; margin: 0; }
         body { width: 80mm; padding: 3mm; }
         .no-print { display: none !important; }
     }
 
-    /* ─── Print 58mm Override ─── */
-    body.size-58mm { width: 58mm; font-size: 8px; }
+    /* 58mm override */
+    body.size-58mm { width: 58mm; font-size: 9px; }
+    body.size-58mm .header h3 { font-size: 11px; }
+    body.size-58mm .header .sub { font-size: 8px; }
+    body.size-58mm table { font-size: 8px; }
+    body.size-58mm th { font-size: 7.5px; }
+    body.size-58mm .info-row { font-size: 8px; }
+    body.size-58mm .footer-line { font-size: 8px; }
+    body.size-58mm .total-box { font-size: 10px; }
+    body.size-58mm .date-header { font-size: 8px; }
+    body.size-58mm .sig-block { font-size: 7.5px; }
+    body.size-58mm .sig-line { width: 20mm; margin-top: 8mm; }
+
     @media print {
-        body.size-58mm { @page { size: 58mm auto; margin: 0; } width: 58mm; }
+        body.size-58mm { width: 58mm; }
     }
 
-    /* ─── Layout Tabel (Kunci Perbaikan) ─── */
+    /* ─── Header ─── */
+    .header {
+        text-align: center;
+        padding-bottom: 4px;
+    }
+    .header h3 {
+        font-size: 13px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 2px;
+    }
+    .header .sub {
+        font-size: 9px;
+        letter-spacing: 0.3px;
+    }
+
+    /* ─── Dividers ─── */
+    .div-double {
+        border-top: 1px solid #000;
+        border-bottom: 1px solid #000;
+        height: 3px;
+        margin: 4px 0;
+    }
+    .div-solid {
+        border-top: 1px solid #000;
+        margin: 4px 0;
+    }
+    .div-dashed {
+        border-top: 1px dashed #000;
+        margin: 4px 0;
+    }
+    .div-dots {
+        text-align: center;
+        font-size: 8px;
+        letter-spacing: 2px;
+        color: #666;
+        margin: 3px 0;
+        overflow: hidden;
+        white-space: nowrap;
+    }
+
+    /* ─── Info rows ─── */
+    .info-section {
+        margin: 4px 0;
+    }
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 9px;
+        line-height: 1.6;
+    }
+    .info-row .label {
+        color: #333;
+        flex-shrink: 0;
+    }
+    .info-row .value {
+        font-weight: bold;
+        text-align: right;
+    }
+
+    /* ─── Date group header ─── */
+    .date-header {
+        font-size: 9px;
+        font-weight: bold;
+        background: #000;
+        color: #fff;
+        padding: 2px 4px;
+        margin: 4px 0 1px;
+        letter-spacing: 0.3px;
+    }
+
+    /* ─── Table ─── */
     table {
         width: 100%;
-        table-layout: fixed; /* Memaksa tabel tidak melar keluar */
+        table-layout: fixed;
         border-collapse: collapse;
-        font-size: 8.5px;
-        margin: 4px 0;
+        font-size: 9px;
+        margin: 0;
     }
 
     th, td {
-        padding: 2px 1px;
-        text-align: center;
-        overflow-wrap: break-word; /* Memecah kata panjang */
-        word-wrap: break-word;
+        padding: 2px 2px;
+        vertical-align: top;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
-    /* Porsi Kolom: Nama Produk dapat ruang paling besar */
-    .nama { width: 35%; text-align: left; }
-    th:not(.nama), td:not(.nama) { width: 13%; }
+    /* Column widths — 5 columns for better fit */
+    .col-nama  { width: 36%; text-align: left; }
+    .col-stok  { width: 12%; text-align: center; }
+    .col-laku  { width: 12%; text-align: center; }
+    .col-hrg   { width: 20%; text-align: right; }
+    .col-bayar { width: 20%; text-align: right; }
 
-    thead tr { border-top: 1px solid #000; border-bottom: 1px solid #000; }
-    tbody tr:last-child { border-bottom: 1px solid #000; }
-    .num { text-align: right; }
+    thead tr {
+        border-bottom: 1px solid #000;
+    }
+    tbody tr {
+        border-bottom: 1px dotted #ccc;
+    }
+    tbody tr:last-child {
+        border-bottom: none;
+    }
 
-    /* ─── Header & Info ─── */
-    .header { text-align: center; margin-bottom: 4px; }
-    .header h3 { font-size: 13px; font-weight: bold; text-transform: uppercase; }
-    .info { font-size: 9px; line-height: 1.4; }
-    .div-solid { border-top: 1px solid #000; margin: 4px 0; }
-    .div-dashed { border-top: 1px dashed #000; margin: 4px 0; }
+    th {
+        font-size: 8px;
+        font-weight: bold;
+        text-transform: uppercase;
+        padding: 3px 2px;
+        letter-spacing: 0.3px;
+    }
 
-    /* ─── Footer ─── */
-    .footer { font-size: 9px; }
-    .footer-row { display: flex; justify-content: space-between; margin: 1px 0; }
-    .bold-total { font-weight: bold; font-size: 11px; margin-top: 2px; }
+    td.col-nama {
+        white-space: normal;
+        word-break: break-word;
+        line-height: 1.3;
+    }
 
-    /* ─── Signature & Others ─── */
-    .signature { margin-top: 10px; display: flex; justify-content: space-between; font-size: 9px; }
-    .sig-line { margin-top: 12mm; border-top: 1px solid #000; }
+    .row-warning td {
+        /* Visual indicator for laku > stok */
+    }
+    .sisa-note {
+        font-size: 7px;
+        color: #666;
+        display: inline;
+    }
 
-    /* ─── Buttons ─── */
-    .no-print { text-align: center; margin-top: 16px; font-family: sans-serif; }
-    .btn { padding: 7px 18px; border-radius: 5px; cursor: pointer; border: none; }
-    .btn-primary { background: #0d6efd; color: #fff; }
-    .btn-outline { background: #fff; border: 1px solid #ccc; }
+    /* ─── Footer totals ─── */
+    .footer-section {
+        margin: 4px 0;
+    }
+    .footer-line {
+        display: flex;
+        justify-content: space-between;
+        font-size: 9px;
+        line-height: 1.7;
+    }
+    .footer-line .label { color: #333; }
+    .footer-line .value { font-weight: bold; }
+
+    .total-box {
+        margin: 5px 0;
+        padding: 4px 0;
+        border-top: 1px solid #000;
+        border-bottom: 1px double #000;
+    }
+    .total-line {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        font-weight: bold;
+        letter-spacing: 0.3px;
+    }
+
+    /* ─── Notes ─── */
+    .note-section {
+        font-size: 7.5px;
+        color: #555;
+        margin: 3px 0;
+        line-height: 1.5;
+    }
+
+    /* ─── Signature ─── */
+    .signature {
+        margin-top: 12px;
+        display: flex;
+        justify-content: space-between;
+        text-align: center;
+    }
+    .sig-block {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-size: 8.5px;
+    }
+    .sig-label {
+        font-weight: bold;
+        margin-bottom: 1px;
+    }
+    .sig-line {
+        margin-top: 12mm;
+        border-top: 1px solid #000;
+        width: 24mm;
+        padding-top: 2px;
+        font-size: 8px;
+    }
+
+    /* ─── Thank you ─── */
+    .thank-you {
+        text-align: center;
+        font-size: 8px;
+        color: #666;
+        margin-top: 8px;
+        letter-spacing: 0.3px;
+    }
+
+    /* ─── Buttons (no print) ─── */
+    .no-print {
+        text-align: center;
+        margin-top: 16px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    .btn {
+        padding: 8px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        border: none;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.15s;
+        text-decoration: none;
+        display: inline-block;
+    }
+    .btn-primary {
+        background: #1d4ed8;
+        color: #fff;
+    }
+    .btn-primary:hover { background: #1e40af; }
+    .btn-outline {
+        background: #fff;
+        border: 1px solid #d1d5db;
+        color: #374151;
+    }
+    .btn-outline:hover { background: #f9fafb; }
+    .btn-outline.active {
+        background: #1d4ed8;
+        color: #fff;
+        border-color: #1d4ed8;
+    }
+    .btn-secondary {
+        background: #6b7280;
+        color: #fff;
+        margin-left: 8px;
+    }
+    .btn-secondary:hover { background: #4b5563; }
+
+    .size-toggle {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 14px;
+    }
 </style>
 </head>
 <body id="notaBody">
 
-    {{-- ═══ TOMBOL UKURAN (tidak ikut cetak) ═══ --}}
+    {{-- Tombol ukuran (tidak cetak) --}}
     <div class="no-print size-toggle">
-        <button onclick="setSize(80)" class="btn btn-outline" id="btn80">80mm</button>
-        <button onclick="setSize(58)" class="btn btn-outline" id="btn58">58mm</button>
+        <button onclick="setSize(80)" class="btn btn-outline active" id="btn80">📄 80mm</button>
+        <button onclick="setSize(58)" class="btn btn-outline" id="btn58">🧾 58mm</button>
     </div>
 
-    {{-- ═══ HEADER ═══ --}}
+    {{-- ═══ Header ═══ --}}
     <div class="header">
         <h3>{{ strtoupper($storeName) }}</h3>
-        <p>Nota Pembayaran Supplier</p>
+        <div class="sub">NOTA PEMBAYARAN SUPPLIER</div>
     </div>
 
-    <div class="div-solid"></div>
+    <div class="div-double"></div>
 
-    {{-- ═══ INFO SUPPLIER & PERIODE ═══ --}}
-    <div class="info">
-        <div>Supplier : <strong>{{ $payment->supplier->nama_supplier }}</strong></div>
+    {{-- ═══ Info ═══ --}}
+    <div class="info-section">
         <div class="info-row">
-            <span>
-                Periode :
-                <span class="tgl-sistem" data-date="{{ \Carbon\Carbon::parse($payment->periode_awal)->toDateString() }}"></span>
-                s/d
-                <span class="tgl-sistem" data-date="{{ \Carbon\Carbon::parse($payment->periode_akhir)->toDateString() }}"></span>
+            <span class="label">No. Nota</span>
+            <span class="value">#{{ str_pad($payment->id, 5, '0', STR_PAD_LEFT) }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Supplier</span>
+            <span class="value">{{ $payment->supplier->nama_supplier }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Periode</span>
+            <span class="value">
+                <span class="tgl-sys" data-date="{{ \Carbon\Carbon::parse($payment->periode_awal)->toDateString() }}"></span>
+                -
+                <span class="tgl-sys" data-date="{{ \Carbon\Carbon::parse($payment->periode_akhir)->toDateString() }}"></span>
             </span>
         </div>
-        <div>Dicetak  : <span class="tgl-sistem" data-datetime="{{ now()->toIso8601String() }}"></span></div>
+        <div class="info-row">
+            <span class="label">Dicetak</span>
+            <span class="value"><span class="tgl-sys-dt" data-dt="{{ now()->toIso8601String() }}"></span></span>
+        </div>
     </div>
 
     <div class="div-solid"></div>
 
-    {{-- ═══ TABEL DETAIL PENJUALAN ═══ --}}
+    {{-- ═══ Tabel detail ═══ --}}
     @php
-        $grandKirim = 0;
-        $grandLaku = 0;
-        $grandBayarSupplier = 0;
+        $grandStok        = 0;
+        $grandLaku        = 0;
+        $grandSisa        = 0;
+        $grandBayar       = 0;
+        $adaLakuMelebihi  = false;
+        $itemCount        = 0;
     @endphp
 
-    <table>
-        <thead>
-            <tr>
-                <th>Tgl</th>
-                <th class="nama">Barang</th>
-                <th>Krm</th>
-                <th>Laku</th>
-                <th>Sisa</th>
-                <th class="num">Hrg</th>
-                <th class="num">Bayar</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($groupedDetails as $tanggal => $items)
+    @foreach($details as $tanggal => $items)
+        {{-- Date group header --}}
+        <div class="date-header">
+            📅 <span class="tgl-long" data-date="{{ $tanggal }}"></span>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th class="col-nama">Barang</th>
+                    <th class="col-stok">Stok</th>
+                    <th class="col-laku">Laku</th>
+                    <th class="col-hrg">Hrg</th>
+                    <th class="col-bayar">Bayar</th>
+                </tr>
+            </thead>
+            <tbody>
                 @foreach($items as $row)
                     @php
-                        // Akumulasi perhitungan
-                        $grandKirim += $row['kirim'];
-                        $grandLaku += $row['laku'];
-                        $grandBayarSupplier += $row['bayar_supplier'];
+                        $grandStok  += $row['stok'];
+                        $grandLaku  += $row['laku'];
+                        $grandSisa  += $row['sisa'];
+                        $grandBayar += $row['bayar_supplier'];
+                        $itemCount++;
+                        if ($row['laku'] > $row['stok']) { $adaLakuMelebihi = true; }
                     @endphp
-                    <tr>
-                        <td><span class="tgl-sistem-short" data-date="{{ $tanggal }}"></span></td>
-                        <td class="nama">{{ $row['nama_produk'] }}</td>
-                        <td>{{ $row['kirim'] }}</td>
-                        <td>{{ $row['laku'] }}</td>
-                        <td>{{ $row['sisa'] }}</td>
-                        <td class="num">{{ number_format($row['harga_beli'], 0, ',', '.') }}</td>
-                        <td class="num">{{ number_format($row['bayar_supplier'], 0, ',', '.') }}</td>
+                    <tr @if($row['laku'] > $row['stok']) class="row-warning" @endif>
+                        <td class="col-nama">{{ $row['nama_produk'] }}</td>
+                        <td class="col-stok">{{ $row['stok'] }}</td>
+                        <td class="col-laku">
+                            {{ $row['laku'] }}
+                            @if($row['laku'] > $row['stok'])
+                                <span class="sisa-note">*</span>
+                            @endif
+                        </td>
+                        <td class="col-hrg">{{ number_format($row['harga_beli'], 0, ',', '.') }}</td>
+                        <td class="col-bayar">{{ number_format($row['bayar_supplier'], 0, ',', '.') }}</td>
                     </tr>
                 @endforeach
-            @endforeach
-        </tbody>
-    </table>
+            </tbody>
+        </table>
+    @endforeach
 
-    {{-- ═══ FOOTER TOTALS ═══ --}}
-    <div class="footer">
-        <div class="footer-row">
-            <span>Total Kirim</span>
-            <span>{{ $grandKirim }} pcs</span>
+    <div class="div-solid"></div>
+
+    {{-- ═══ Keterangan ═══ --}}
+    @if($adaLakuMelebihi)
+    <div class="note-section">
+        * Laku melebihi stok kiriman.<br>
+        &nbsp; Sisa = 0, bayar dihitung dari<br>
+        &nbsp; jumlah kiriman saja.
+    </div>
+    <div class="div-dashed"></div>
+    @endif
+
+    {{-- ═══ Ringkasan ═══ --}}
+    <div class="footer-section">
+        <div class="footer-line">
+            <span class="label">Jumlah Item</span>
+            <span class="value">{{ $itemCount }} barang</span>
         </div>
-        <div class="footer-row">
-            <span>Total Laku</span>
-            <span>{{ $grandLaku }} pcs</span>
+        <div class="footer-line">
+            <span class="label">Total Stok</span>
+            <span class="value">{{ $grandStok }} pcs</span>
         </div>
-        <div class="footer-row">
-            <span>Total Sisa / Retur</span>
-            <span>{{ $grandKirim - $grandLaku }} pcs</span>
+        <div class="footer-line">
+            <span class="label">Total Laku</span>
+            <span class="value">{{ $grandLaku }} pcs</span>
         </div>
-
-        <div class="div-dashed"></div>
-
-        <div class="footer-row bold-total">
-            <span>TOTAL BAYAR SUPPLIER</span>
-            <span>Rp {{ number_format($grandBayarSupplier, 0, ',', '.') }}</span>
-        </div>
-
-        <div class="div-solid"></div>
-
-        <div class="printed-line">
-            <div class="printed-inner">
-                <span>Total laku: {{ $grandLaku }} pcs</span>
-                <span>Total: <strong>{{ number_format($grandBayarSupplier, 0, ',', '.') }}</strong></span>
-            </div>
+        <div class="footer-line">
+            <span class="label">Total Sisa</span>
+            <span class="value">{{ $grandSisa }} pcs</span>
         </div>
     </div>
 
-    {{-- ═══ TANDA TANGAN ═══ --}}
+    {{-- ═══ Grand Total ═══ --}}
+    <div class="total-box">
+        <div class="total-line">
+            <span>TOTAL BAYAR</span>
+            <span>Rp {{ number_format($grandBayar, 0, ',', '.') }}</span>
+        </div>
+    </div>
+
+    {{-- ═══ Tanda tangan ═══ --}}
     <div class="signature">
-        <div>
-            Penerima,
-            <div class="sig-line">(.................)</div>
+        <div class="sig-block">
+            <span class="sig-label">Penerima,</span>
+            <div class="sig-line">(..........................)</div>
         </div>
-        <div>
-            Hormat Kami,
-            <div class="sig-line">(.................)</div>
+        <div class="sig-block">
+            <span class="sig-label">Hormat Kami,</span>
+            <div class="sig-line">(..........................)</div>
         </div>
     </div>
 
-    {{-- ═══ TOMBOL AKSI (tidak ikut cetak) ═══ --}}
+    {{-- ═══ Thank you ═══ --}}
+    <div class="thank-you">
+        — Terima Kasih —
+    </div>
+
+    {{-- Tombol aksi (tidak cetak) --}}
     <div class="no-print" style="margin-top:20px;">
-        <button onclick="window.print()" class="btn btn-primary">&#128438; Cetak Nota</button>
-        <a href="{{ route('dashboard') }}" class="btn btn-secondary">Tutup</a>
+        <button onclick="window.print()" class="btn btn-primary">🖨️ Cetak Nota</button>
+        <a href="{{ route('dashboard') }}" class="btn btn-secondary">✕ Tutup</a>
     </div>
 
 </body>
 <script>
-    // ─── Format tanggal mengikuti locale/sistem komputer user ───
-    document.querySelectorAll('.tgl-sistem').forEach(el => {
-        if (el.dataset.date) {
-            const d = new Date(el.dataset.date + 'T00:00:00');
-            el.textContent = d.toLocaleDateString();
-        } else if (el.dataset.datetime) {
-            const d = new Date(el.dataset.datetime);
-            el.textContent = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
-    });
-
-    // Versi singkat untuk kolom tabel (tgl/bln saja, ikut urutan locale)
-    document.querySelectorAll('.tgl-sistem-short').forEach(el => {
+    // Format tanggal panjang (dd/mm/yyyy)
+    document.querySelectorAll('.tgl-sys').forEach(el => {
         const d = new Date(el.dataset.date + 'T00:00:00');
-        el.textContent = d.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' });
+        el.textContent = d.toLocaleDateString('id-ID');
     });
 
-    // Pilih ukuran thermal (58mm / 80mm) sebelum cetak
+    // Format tanggal + jam
+    document.querySelectorAll('.tgl-sys-dt').forEach(el => {
+        const d = new Date(el.dataset.dt);
+        el.textContent = d.toLocaleDateString('id-ID') + ' ' +
+            d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    });
+
+    // Format tanggal panjang di date group header
+    document.querySelectorAll('.tgl-long').forEach(el => {
+        const d = new Date(el.dataset.date + 'T00:00:00');
+        const options = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
+        el.textContent = d.toLocaleDateString('id-ID', options);
+    });
+
+    // Pilih ukuran thermal
     function setSize(mm) {
         const body = document.getElementById('notaBody');
         body.classList.toggle('size-58mm', mm === 58);
-        // Update tombol aktif
-        document.getElementById('btn58').style.background = mm === 58 ? '#0d6efd' : '';
-        document.getElementById('btn58').style.color      = mm === 58 ? '#fff'    : '';
-        document.getElementById('btn80').style.background = mm === 80 ? '#0d6efd' : '';
-        document.getElementById('btn80').style.color      = mm === 80 ? '#fff'    : '';
-        // Override @page size di runtime via injected style
-        let styleTag = document.getElementById('dynamic-page-size');
-        if (!styleTag) {
-            styleTag = document.createElement('style');
-            styleTag.id = 'dynamic-page-size';
-            document.head.appendChild(styleTag);
-        }
-        styleTag.textContent = `@media print { @page { size: ${mm}mm auto; margin: 0; } body { width: ${mm}mm; } }`;
+
+        document.getElementById('btn58').classList.toggle('active', mm === 58);
+        document.getElementById('btn80').classList.toggle('active', mm === 80);
+
+        let s = document.getElementById('dps');
+        if (!s) { s = document.createElement('style'); s.id = 'dps'; document.head.appendChild(s); }
+        s.textContent = `@media print { @page { size: ${mm}mm auto; margin:0; } body { width:${mm}mm; } }`;
     }
 
-    // Default: 80mm aktif
     setSize(80);
-
-    // Auto-print saat halaman pertama kali dibuka
     window.addEventListener('load', () => window.print());
 </script>
 </html>

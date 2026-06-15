@@ -8,38 +8,46 @@ use App\Models\SupplierPaymentDetail;
 use App\Models\CashFlow;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+
 class PaymentController extends Controller
 {
     public function create()
     {
-        $suppliers = Supplier::orderBy('nama_supplier')->get();
-        return view('payments.create', compact('suppliers'));
+        $suppliers        = Supplier::orderBy('nama_supplier')->get();
+        $defaultStoreName = config('app.store_name', config('app.name', 'TOKO'));
+        return view('payments.create', compact('suppliers', 'defaultStoreName'));
     }
 
-public function store(Request $request)
+    public function store(Request $request)
     {
         $validated = $request->validate([
             'supplier_id'   => 'required|exists:suppliers,id',
             'periode_awal'  => 'required|date',
             'periode_akhir' => 'required|date|after_or_equal:periode_awal',
+            'nama_toko'     => 'nullable|string|max:100',
         ]);
 
-        // 1. Ambil data harga beli terakhir berdasarkan periode kiriman
-        $hargaBeliMap = DB::table('delivery_items as di')
+        // Ambil harga beli & jumlah kiriman per produk dari delivery dalam periode
+        $deliveryItems = DB::table('delivery_items as di')
             ->join('deliveries as d', 'di.delivery_id', '=', 'd.id')
             ->where('d.supplier_id', $validated['supplier_id'])
             ->whereBetween('d.tanggal', [$validated['periode_awal'], $validated['periode_akhir']])
-            ->select('di.product_id', DB::raw('MAX(di.harga) as harga'))
+            ->select(
+                'di.product_id',
+                DB::raw('MAX(di.harga) as harga'),
+                DB::raw('SUM(di.jumlah_kirim) as total_kirim')
+            )
             ->groupBy('di.product_id')
-            ->pluck('harga', 'product_id');
+            ->get();
 
-        if ($hargaBeliMap->isEmpty()) {
-            return back()->with('error', "Tidak ada data kiriman dari supplier ini pada periode " . $validated['periode_awal'] . " sampai " . $validated['periode_akhir'] . ". Pastikan tanggal dan supplier sudah benar.");
+        if ($deliveryItems->isEmpty()) {
+            return back()->with('error', 'Tidak ada kiriman pada periode tersebut.');
         }
 
-        $productIds = $hargaBeliMap->keys();
+        $hargaBeliMap = $deliveryItems->pluck('harga', 'product_id');
+        $kirimMap     = $deliveryItems->pluck('total_kirim', 'product_id');
+        $productIds   = $hargaBeliMap->keys();
 
-        // 2. Ambil data penjualan produk yang dikirim oleh supplier ini
         $saleItems = DB::table('sale_items as si')
             ->join('sales as s', 'si.sale_id', '=', 's.id')
             ->whereIn('si.product_id', $productIds)
@@ -53,7 +61,7 @@ public function store(Request $request)
             ->get();
 
         if ($saleItems->isEmpty()) {
-            return back()->with('error', 'Produk dari supplier ini belum ada yang terjual pada periode tersebut.');
+            return back()->with('error', 'Tidak ada penjualan produk dari supplier ini pada periode tersebut.');
         }
 
         $totalBayarSupplier = 0;
@@ -61,16 +69,24 @@ public function store(Request $request)
 
         foreach ($saleItems as $item) {
             $hargaBeli           = $hargaBeliMap->get($item->product_id, 0);
-            $totalBayarSupplier += $item->total_laku * $hargaBeli;
+            // Bayar supplier = min(laku, kirim) × harga beli
+            // Agar tidak bayar lebih dari yang dikirim jika penjualan melebihi kiriman
+            $kirim               = $kirimMap->get($item->product_id, 0);
+            $lakuEfektif         = min((int) $item->total_laku, (int) $kirim);
+            $totalBayarSupplier += $lakuEfektif * $hargaBeli;
             $totalPendapatan    += $item->total_pendapatan;
         }
 
         $keuntunganToko = $totalPendapatan - $totalBayarSupplier;
+        $namaToko       = trim($validated['nama_toko'] ?? '') ?: config('app.store_name', config('app.name', 'TOKO'));
 
-        // 3. Proses Transaksi
-        $payment = DB::transaction(function () use ($validated, $totalBayarSupplier, $totalPendapatan, $keuntunganToko, $hargaBeliMap) {
+        $payment = DB::transaction(function () use (
+            $validated, $totalBayarSupplier, $totalPendapatan,
+            $keuntunganToko, $hargaBeliMap, $kirimMap, $namaToko
+        ) {
             $payment = SupplierPayment::create([
                 'supplier_id'      => $validated['supplier_id'],
+                'nama_toko'        => $namaToko,
                 'periode_awal'     => $validated['periode_awal'],
                 'periode_akhir'    => $validated['periode_akhir'],
                 'total_pendapatan' => $totalPendapatan,
@@ -83,7 +99,6 @@ public function store(Request $request)
 
             $payment->load('supplier');
 
-            // Simpan detail pembayaran
             $deliveries = \App\Models\Delivery::where('supplier_id', $validated['supplier_id'])
                 ->whereBetween('tanggal', [$validated['periode_awal'], $validated['periode_akhir']])
                 ->with('items')
@@ -92,14 +107,15 @@ public function store(Request $request)
             foreach ($deliveries as $delivery) {
                 $amount = 0;
                 foreach ($delivery->items as $di) {
-                    $sold = DB::table('sale_items as si')
+                    $sold      = DB::table('sale_items as si')
                         ->join('sales as s', 'si.sale_id', '=', 's.id')
                         ->where('si.product_id', $di->product_id)
                         ->whereBetween('s.tanggal', [$validated['periode_awal'], $validated['periode_akhir']])
                         ->sum('si.laku');
-
+                    $kirim     = $kirimMap->get($di->product_id, $di->jumlah_kirim ?? 0);
+                    $lakuEfek  = min((int) $sold, (int) $kirim);
                     $hargaBeli = $hargaBeliMap->get($di->product_id, $di->harga);
-                    $amount   += $sold * $hargaBeli;
+                    $amount   += $lakuEfek * $hargaBeli;
                 }
 
                 SupplierPaymentDetail::create([
@@ -109,7 +125,6 @@ public function store(Request $request)
                 ]);
             }
 
-            // Catat Kas Keluar
             $namaSupplier = $payment->supplier->nama_supplier;
             $periode      = "{$validated['periode_awal']} s/d {$validated['periode_akhir']}";
 
@@ -122,7 +137,6 @@ public function store(Request $request)
                 'created_by' => auth()->id(),
             ]);
 
-            // Jika rugi, catat kerugian
             if ($keuntunganToko < 0) {
                 CashFlow::create([
                     'tanggal'    => now(),
@@ -140,35 +154,73 @@ public function store(Request $request)
         return redirect()->route('payments.print', $payment->id)
             ->with('success', 'Pembayaran supplier berhasil dicatat.');
     }
-public function printNota($id)
-{
-    // Pastikan relasi di model SupplierPaymentDetail sudah benar (menghubungkan ke delivery_items)
-    $payment = SupplierPayment::with(['supplier', 'details.delivery.items.product'])->findOrFail($id);
 
-    $groupedDetails = [];
+    public function printNota($id)
+    {
+        $payment = SupplierPayment::with('supplier')->findOrFail($id);
 
-    foreach ($payment->details as $detail) {
-        $delivery = $detail->delivery;
-        $tanggal = \Carbon\Carbon::parse($delivery->tanggal)->format('Y-m-d');
+        // Nama toko: dari kolom DB (tersimpan permanen) atau fallback config
+        $storeName = $payment->nama_toko
+            ?? config('app.store_name', config('app.name', 'TOKO'));
 
-        foreach ($delivery->items as $item) {
-            // Hitung laku untuk produk ini di periode tersebut
-            $laku = \App\Models\SaleItem::where('product_id', $item->product_id)
-                ->whereHas('sale', fn($q) => $q->whereBetween('tanggal', [$payment->periode_awal, $payment->periode_akhir]))
-                ->sum('laku');
+        // Harga beli & jumlah kiriman per produk dalam periode ini
+        $deliveryAgg = DB::table('delivery_items as di')
+            ->join('deliveries as d', 'di.delivery_id', '=', 'd.id')
+            ->where('d.supplier_id', $payment->supplier_id)
+            ->whereBetween('d.tanggal', [$payment->periode_awal, $payment->periode_akhir])
+            ->select(
+                'di.product_id',
+                DB::raw('MAX(di.harga) as harga'),
+                DB::raw('SUM(di.jumlah_kirim) as total_kirim')
+            )
+            ->groupBy('di.product_id')
+            ->get();
 
-            $groupedDetails[$tanggal][] = [
-                'nama_produk'    => $item->product->nama_produk ?? 'N/A',
-                'kirim'          => $item->jumlah_kirim, // Dari tabel delivery_items
+        $hargaBeliMap = $deliveryAgg->pluck('harga', 'product_id');
+        $kirimMap     = $deliveryAgg->pluck('total_kirim', 'product_id');
+
+        $saleData = DB::table('sale_items as si')
+            ->join('sales as s', 'si.sale_id', '=', 's.id')
+            ->join('products as p', 'si.product_id', '=', 'p.id')
+            ->whereIn('si.product_id', $hargaBeliMap->keys())
+            ->whereBetween('s.tanggal', [$payment->periode_awal, $payment->periode_akhir])
+            ->select(
+                's.tanggal',
+                'si.product_id',
+                'p.nama_produk',
+                DB::raw('SUM(si.laku) as laku'),
+                DB::raw('MAX(si.harga_jual) as harga_jual')
+            )
+            ->groupBy('s.tanggal', 'si.product_id', 'p.nama_produk')
+            ->orderBy('s.tanggal')
+            ->get();
+
+        $details = $saleData->map(function ($sale) use ($hargaBeliMap, $kirimMap) {
+            $hargaBeli = $hargaBeliMap->get($sale->product_id, 0);
+            // Stok = total kiriman supplier dalam periode ini
+            $stok      = (int) $kirimMap->get($sale->product_id, 0);
+            $laku      = (int) $sale->laku;
+            // [BUG FIX] Sisa tidak boleh negatif meski laku > kiriman
+            $sisa      = max(0, $stok - $laku);
+            // [BUG FIX] Bayar supplier hanya untuk yang terjual ≤ kiriman
+            $lakuEfektif   = min($laku, $stok);
+            $bayarSupplier = $lakuEfektif * $hargaBeli;
+            $pendapatan    = $laku * (int) $sale->harga_jual;
+
+            return [
+                'tanggal'        => $sale->tanggal,
+                'nama_produk'    => $sale->nama_produk,
+                'stok'           => $stok,
                 'laku'           => $laku,
-                'sisa'           => $item->jumlah_kirim - $laku,
-                'harga_beli'     => $item->harga,
-                'bayar_supplier' => $laku * $item->harga,
+                'sisa'           => $sisa,
+                'harga_beli'     => $hargaBeli,
+                'harga_jual'     => (int) $sale->harga_jual,
+                'bayar_supplier' => $bayarSupplier,
+                'pendapatan'     => $pendapatan,
+                'keuntungan'     => $pendapatan - $bayarSupplier,
             ];
-        }
-    }
+        })->groupBy('tanggal');
 
-    $storeName = "NAMA TOKO ANDA";
-    return view('payments.nota', compact('payment', 'groupedDetails', 'storeName'));
-}
+        return view('payments.nota', compact('payment', 'details', 'storeName'));
+    }
 }
