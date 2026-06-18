@@ -27,46 +27,72 @@
     <div class="sr-table-wrap">
         <table class="sr-table">
             <thead>
-                <tr>
-                    <th class="col-no">No.</th>
-                    <th class="col-tgl">Tgl.</th>
-                    <th class="col-produk">Produk</th>
-                    <th class="col-num">Harga Beli</th>
-                    <th class="col-num">Stok</th>
-                    <th class="col-num">Laku</th>
-                    <th class="col-num">BS</th>
-                    <th class="col-num">Total Penjualan</th>
-                </tr>
-            </thead>
+<tr>
+    <th class="col-no">No.</th>
+    <th class="col-tgl">Tanggal</th>
+    <th class="col-produk">Produk</th>
+    <th class="col-num">Harga Beli</th>
+    <th class="col-num">Harga Jual</th>
+    <th class="col-num">Laku</th>
+    <th class="col-num">Stok</th>
+    <th class="col-num">Total Penjualan</th>
+</tr>
+</thead>
             <tbody>
-                @forelse($supplierRows as $row)
-                <tr>
-                    <td class="col-no">{{ $row['no'] }}</td>
-                    <td class="col-tgl">{{ $row['tanggal'] }}</td>
-                    <td class="col-produk">{{ $row['produk'] }}</td>
-                    <td class="col-num">{{ number_format($row['hargaBeli'], 0, ',', '.') }}</td>
-                    <td class="col-num">{{ number_format($row['stok'], 0, ',', '.') }}</td>
-                    <td class="col-num">{{ number_format($row['laku'], 0, ',', '.') }}</td>
-                    <td class="col-num {{ $row['sisa'] > 0 ? 'sisa-ada' : '' }}">{{ number_format($row['sisa'], 0, ',', '.') }}</td>
-                    <td class="col-num mono-val">Rp {{ number_format($row['penjualan'], 0, ',', '.') }}</td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="8" class="sr-empty">Tidak ada data untuk periode ini.</td>
-                </tr>
-                @endforelse
-            </tbody>
+@forelse($supplierRows as $row)
+<tr>
+    <td class="col-no">{{ $row['no'] }}</td>
+    <td class="col-tgl">{{ $row['tanggal'] }}</td>
+    <td class="col-produk">{{ $row['produk'] }}</td>
+
+    <td class="col-num">
+        Rp {{ number_format($row['hargaBeli'], 0, ',', '.') }}
+    </td>
+
+    <td class="col-num">
+        Rp {{ number_format($row['hargaJual'] ?? 0, 0, ',', '.') }}
+    </td>
+
+    <td class="col-num">
+        {{ number_format($row['laku'], 0, ',', '.') }}
+    </td>
+
+    <td class="col-num">
+        {{ number_format($row['stok'], 0, ',', '.') }}
+    </td>
+
+    <td class="col-num mono-val">
+        Rp {{ number_format($row['penjualan'], 0, ',', '.') }}
+    </td>
+</tr>
+@empty
+<tr>
+    <td colspan="9" class="sr-empty">
+        Tidak ada data untuk periode ini.
+    </td>
+</tr>
+@endforelse
+</tbody>
             @if(count($supplierRows) > 0)
             <tfoot>
-                <tr>
-                    <td colspan="3" class="tfoot-label">Total</td>
-                    <td class="col-num">—</td>
-                    <td class="col-num tfoot-val">{{ number_format(array_sum(array_column($supplierRows, 'stok')), 0, ',', '.') }}</td>
-                    <td class="col-num tfoot-val">{{ number_format(array_sum(array_column($supplierRows, 'laku')), 0, ',', '.') }}</td>
-                    <td class="col-num tfoot-val">{{ number_format(array_sum(array_column($supplierRows, 'sisa')), 0, ',', '.') }}</td>
-                    <td class="col-num tfoot-val mono-val">Rp {{ number_format(array_sum(array_column($supplierRows, 'penjualan')), 0, ',', '.') }}</td>
-                </tr>
-            </tfoot>
+<tr>
+    <td colspan="4" class="tfoot-label">Total</td>
+
+    <td class="col-num">—</td>
+
+    <td class="col-num tfoot-val">
+        {{ number_format(array_sum(array_column($supplierRows,'laku')),0,',','.') }}
+    </td>
+
+    <td class="col-num tfoot-val">
+        {{ number_format(array_sum(array_column($supplierRows,'stok')),0,',','.') }}
+    </td>
+
+    <td class="col-num tfoot-val mono-val">
+        Rp {{ number_format(array_sum(array_column($supplierRows,'penjualan')),0,',','.') }}
+    </td>
+</tr>
+</tfoot>
             @endif
         </table>
     </div>

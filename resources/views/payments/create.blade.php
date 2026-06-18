@@ -200,6 +200,10 @@
                    border:1px solid var(--border); color:var(--ink-soft);">
             Batal
         </a>
+        <a href="{{ route('payments.history') }}"
+            class="btn btn-secondary"><i class="fas fa-history"></i>
+            Riwayat Nota
+        </a>
         <span style="margin-left:auto; font-size:12px; color:var(--ink-muted); display:flex; align-items:center; gap:5px;">
             <kbd class="kbd">Ctrl</kbd> + <kbd class="kbd">Enter</kbd> untuk simpan
         </span>

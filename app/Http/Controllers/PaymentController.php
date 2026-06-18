@@ -223,4 +223,23 @@ class PaymentController extends Controller
 
         return view('payments.nota', compact('payment', 'details', 'storeName'));
     }
+
+public function history(Request $request)
+{
+    $query = SupplierPayment::with('supplier')
+        ->latest();
+
+    if ($request->supplier_id) {
+        $query->where('supplier_id', $request->supplier_id);
+    }
+
+    $payments = $query->paginate(20);
+
+    $suppliers = Supplier::orderBy('nama_supplier')->get();
+
+    return view('payments.history', compact(
+        'payments',
+        'suppliers'
+    ));
+}
 }

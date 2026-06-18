@@ -18,7 +18,7 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
 
-    'store_name' => env('STORE_NAME', 'Toko Kue Sari'),
+    'store_name' => env('STORE_NAME', 'TOKO KUE SARI REZEKI'),
 
 
 

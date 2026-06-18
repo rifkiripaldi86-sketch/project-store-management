@@ -46,6 +46,7 @@ Route::middleware('auth')->group(function () {
         Route::get('payments/create', [PaymentController::class, 'create'])->name('payments.create');
         Route::post('payments/store', [PaymentController::class, 'store'])->name('payments.store');
         Route::get('payments/print/{id}', [PaymentController::class, 'printNota'])->name('payments.print');
+        Route::get('/payments/history', [PaymentController::class, 'history'])->name('payments.history');
     });
 
     // Role khusus admin

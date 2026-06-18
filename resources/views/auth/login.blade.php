@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Masuk - Toko Kue Sari Rezeki</title>
+    <title>Masuk - TOKO KUE SARI REZEKI</title>
 
     <!-- Google Fonts: Inter + Sora -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Sora:wght@600;700&display=swap" rel="stylesheet">
@@ -427,16 +427,6 @@
                         <i class="fas fa-arrow-right-to-bracket"></i> Masuk
                     </button>
                 </form>
-
-                <div class="demo-card">
-                    <div class="demo-label">
-                        <i class="fas fa-flask me-1"></i> Demo Akses
-                    </div>
-                    <div class="demo-cred">
-                        <span><strong>Email:</strong> admin@tokosarirezeki.com</span>
-                        <span><strong>Password:</strong> admin123</span>
-                    </div>
-                </div>
 
                 <div class="copyright">
                     &copy; {{ date('Y') }} Toko Kue Sari Rezeki — All rights reserved

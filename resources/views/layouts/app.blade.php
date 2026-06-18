@@ -517,7 +517,7 @@
             <div class="sb-brand-icon">🍰</div>
             <div class="sb-brand-text">
                 <span class="sb-brand-name">Manajemen Toko</span>
-                <span class="sb-brand-sub">Toko Kue Sari</span>
+                <span class="sb-brand-sub">TOKO KUE SARI REZEKI</span>
             </div>
         </div>
 

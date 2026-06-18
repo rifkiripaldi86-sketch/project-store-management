@@ -33,81 +33,21 @@
         .no-print { display: none !important; }
     }
 
-    /* ═══════════════════════════════════════
-       58mm override — kertas cetak ~48mm
-       ═══════════════════════════════════════ */
-    body.size-58mm {
-        width: 58mm;
-        font-size: 8px;
-        padding: 1.5mm 1.5mm;
-        line-height: 1.3;
-    }
-
-    /* Header */
-    body.size-58mm .header h3 {
-        font-size: 11px;
-        letter-spacing: 0.3px;
-    }
-    body.size-58mm .header .sub {
-        font-size: 7px;
-        letter-spacing: 0;
-    }
-
-    /* Info rows: singkat label, perkecil font */
-    body.size-58mm .info-section { margin: 2px 0; }
-    body.size-58mm .info-row {
-        font-size: 7.5px;
-        line-height: 1.4;
-    }
-    body.size-58mm .info-row .label {
-        font-size: 7px;
-        min-width: 0;
-    }
-    body.size-58mm .info-row .value {
-        font-size: 7.5px;
-    }
-
-    /* Table: 58mm harus lebih kecil */
-    body.size-58mm table { font-size: 7px; }
-    body.size-58mm th { font-size: 6.5px; padding: 2px 1px; }
-    body.size-58mm td { padding: 1px 1px; font-size: 7px; }
-    body.size-58mm .col-nama  { width: 30%; }
-    body.size-58mm .col-stok  { width: 11%; }
-    body.size-58mm .col-laku  { width: 11%; }
-    body.size-58mm .col-hrg   { width: 22%; }
-    body.size-58mm .col-bayar { width: 26%; }
-
-    /* Date header */
-    body.size-58mm .date-header {
-        font-size: 7px;
-        padding: 1px 2px;
-        margin: 2px 0 1px;
-    }
-
-    /* Footer & totals */
-    body.size-58mm .footer-line { font-size: 7.5px; line-height: 1.5; }
-    body.size-58mm .total-box { margin: 3px 0; padding: 3px 0; }
-    body.size-58mm .total-line { font-size: 10px; }
-
-    /* Signature */
-    body.size-58mm .signature { margin-top: 8px; }
-    body.size-58mm .sig-block { font-size: 7px; }
-    body.size-58mm .sig-label { font-size: 7px; }
-    body.size-58mm .sig-line {
-        width: 17mm;
-        margin-top: 7mm;
-        font-size: 6px;
-    }
-
-    /* Notes & misc */
-    body.size-58mm .note-section { font-size: 6.5px; }
-    body.size-58mm .thank-you { font-size: 7px; margin-top: 5px; }
-    body.size-58mm .div-double,
-    body.size-58mm .div-solid,
-    body.size-58mm .div-dashed { margin: 2px 0; }
+    /* 58mm override */
+    body.size-58mm { width: 58mm; font-size: 11px; }
+    body.size-58mm .header h3 { font-size: 13px; }
+    body.size-58mm .header .sub { font-size: 10px; }
+    body.size-58mm table { font-size: 8px; }
+    body.size-58mm th { font-size: 7.5px; }
+    body.size-58mm .info-row { font-size: 10px; }
+    body.size-58mm .footer-line { font-size: 10px; }
+    body.size-58mm .total-box { font-size: 12px; }
+    body.size-58mm .date-header { font-size: 10px; }
+    body.size-58mm .sig-block { font-size: 9px; }
+    body.size-58mm .sig-line { width: 20mm; margin-top: 8mm; }
 
     @media print {
-        body.size-58mm { width: 58mm; padding: 1.5mm; }
+        body.size-58mm { width: 58mm; }
     }
 
     /* ─── Header ─── */
@@ -161,20 +101,14 @@
         justify-content: space-between;
         font-size: 9px;
         line-height: 1.6;
-        gap: 2px;
     }
     .info-row .label {
         color: #333;
         flex-shrink: 0;
-        white-space: nowrap;
     }
     .info-row .value {
         font-weight: bold;
         text-align: right;
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
     }
 
     /* ─── Date group header ─── */
@@ -198,19 +132,19 @@
     }
 
     th, td {
-        padding: 2px 1px;
+        padding: 2px 2px;
         vertical-align: top;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
 
-    /* Column widths — 5 columns */
-    .col-nama  { width: 30%; text-align: left; }
+    /* Column widths — 5 columns for better fit */
+    .col-nama  { width: 36%; text-align: left; }
     .col-stok  { width: 12%; text-align: center; }
     .col-laku  { width: 12%; text-align: center; }
-    .col-hrg   { width: 22%; text-align: right; }
-    .col-bayar { width: 24%; text-align: right; }
+    .col-hrg   { width: 20%; text-align: right; }
+    .col-bayar { width: 20%; text-align: right; }
 
     thead tr {
         border-bottom: 1px solid #000;
@@ -226,7 +160,7 @@
         font-size: 8px;
         font-weight: bold;
         text-transform: uppercase;
-        padding: 3px 1px;
+        padding: 3px 2px;
         letter-spacing: 0.3px;
     }
 
@@ -255,10 +189,7 @@
         font-size: 9px;
         line-height: 1.7;
     }
-    .footer-line .label {
-        color: #333;
-        flex-shrink: 0;
-    }
+    .footer-line .label { color: #333; }
     .footer-line .value { font-weight: bold; }
 
     .total-box {
@@ -369,8 +300,8 @@
 
     {{-- Tombol ukuran (tidak cetak) --}}
     <div class="no-print size-toggle">
-        <button onclick="setSize(80)" class="btn btn-outline" id="btn80">📄 80mm</button>
-        <button onclick="setSize(58)" class="btn btn-outline active" id="btn58">🧾 58mm</button>
+        <button onclick="setSize(80)" class="btn btn-outline active" id="btn80">📄 80mm</button>
+        <button onclick="setSize(58)" class="btn btn-outline" id="btn58">🧾 58mm</button>
     </div>
 
     {{-- ═══ Header ═══ --}}
@@ -384,7 +315,7 @@
     {{-- ═══ Info ═══ --}}
     <div class="info-section">
         <div class="info-row">
-            <span class="label">No.Nota</span>
+            <span class="label">No. Nota</span>
             <span class="value">#{{ str_pad($payment->id, 5, '0', STR_PAD_LEFT) }}</span>
         </div>
         <div class="info-row">
@@ -394,13 +325,13 @@
         <div class="info-row">
             <span class="label">Periode</span>
             <span class="value">
-                <span class="tgl-short" data-date="{{ \Carbon\Carbon::parse($payment->periode_awal)->toDateString() }}"></span>
+                <span class="tgl-sys" data-date="{{ \Carbon\Carbon::parse($payment->periode_awal)->toDateString() }}"></span>
                 -
-                <span class="tgl-short" data-date="{{ \Carbon\Carbon::parse($payment->periode_akhir)->toDateString() }}"></span>
+                <span class="tgl-sys" data-date="{{ \Carbon\Carbon::parse($payment->periode_akhir)->toDateString() }}"></span>
             </span>
         </div>
         <div class="info-row">
-            <span class="label">Cetak</span>
+            <span class="label">Dicetak</span>
             <span class="value"><span class="tgl-sys-dt" data-dt="{{ now()->toIso8601String() }}"></span></span>
         </div>
     </div>
@@ -418,48 +349,45 @@
     @endphp
 
     @foreach($details as $tanggal => $items)
-        {{-- Date group header --}}
-        <div class="date-header">
-            <span class="tgl-long" data-date="{{ $tanggal }}"></span>
+
+    <div class="date-header">
+        📅 <span class="tgl-long" data-date="{{ $tanggal }}"></span>
+    </div>
+
+    @foreach($items as $row)
+
+        @php
+            $grandStok  += $row['stok'];
+            $grandLaku  += $row['laku'];
+            $grandSisa  += $row['sisa'];
+            $grandBayar += $row['bayar_supplier'];
+            $itemCount++;
+
+            if ($row['laku'] > $row['stok']) {
+                $adaLakuMelebihi = true;
+            }
+        @endphp
+
+        <div style="margin-bottom:6px;">
+            <div style="font-weight:bold; font-size:12px;">
+    {{ $row['nama_produk'] }}
+</div>
+
+            <div style="display:flex;justify-content:space-between;font-size:12px;">
+                <span>
+                    {{ $row['laku'] }} x
+                    {{ number_format($row['harga_beli'],0,',','.') }}
+                </span>
+
+                <span>
+                    {{ number_format($row['bayar_supplier'],0,',','.') }}
+                </span>
+            </div>
         </div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th class="col-nama">Barang</th>
-                    <th class="col-stok">Stok</th>
-                    <th class="col-laku">Jual</th>
-                    <th class="col-hrg">Hrg</th>
-                    <th class="col-bayar">Bayar</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($items as $row)
-                    @php
-                        $grandStok  += $row['stok'];
-                        $grandLaku  += $row['laku'];
-                        $grandSisa  += $row['sisa'];
-                        $grandBayar += $row['bayar_supplier'];
-                        $itemCount++;
-                        if ($row['laku'] > $row['stok']) { $adaLakuMelebihi = true; }
-                    @endphp
-                    <tr @if($row['laku'] > $row['stok']) class="row-warning" @endif>
-                        <td class="col-nama">{{ $row['nama_produk'] }}</td>
-                        <td class="col-stok">{{ $row['stok'] }}</td>
-                        <td class="col-laku">
-                            {{ $row['laku'] }}
-                            @if($row['laku'] > $row['stok'])
-                                <span class="sisa-note">*</span>
-                            @endif
-                        </td>
-                        <td class="col-hrg">{{ number_format($row['harga_beli'], 0, ',', '.') }}</td>
-                        <td class="col-bayar">{{ number_format($row['bayar_supplier'], 0, ',', '.') }}</td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
     @endforeach
 
+@endforeach
     <div class="div-solid"></div>
 
     {{-- ═══ Keterangan ═══ --}}
@@ -475,19 +403,19 @@
     {{-- ═══ Ringkasan ═══ --}}
     <div class="footer-section">
         <div class="footer-line">
-            <span class="label">Jml Item</span>
-            <span class="value">{{ $itemCount }} brg</span>
+            <span class="label">Jumlah Item</span>
+            <span class="value">{{ $itemCount }} barang</span>
         </div>
         <div class="footer-line">
-            <span class="label">Ttl Stok</span>
+            <span class="label">Total Stok</span>
             <span class="value">{{ $grandStok }} pcs</span>
         </div>
         <div class="footer-line">
-            <span class="label">Ttl Laku</span>
+            <span class="label">Total Laku</span>
             <span class="value">{{ $grandLaku }} pcs</span>
         </div>
         <div class="footer-line">
-            <span class="label">Ttl Sisa</span>
+            <span class="label">Total Sisa</span>
             <span class="value">{{ $grandSisa }} pcs</span>
         </div>
     </div>
@@ -495,7 +423,7 @@
     {{-- ═══ Grand Total ═══ --}}
     <div class="total-box">
         <div class="total-line">
-            <span>TOTAL</span>
+            <span>TOTAL BAYAR</span>
             <span>Rp {{ number_format($grandBayar, 0, ',', '.') }}</span>
         </div>
     </div>
@@ -504,11 +432,11 @@
     <div class="signature">
         <div class="sig-block">
             <span class="sig-label">Penerima,</span>
-            <div class="sig-line">(...................)</div>
+            <div class="sig-line">(..............)</div>
         </div>
         <div class="sig-block">
             <span class="sig-label">Hormat Kami,</span>
-            <div class="sig-line">(...................)</div>
+            <div class="sig-line">(TOKO KUE SARI REZEKI)</div>
         </div>
     </div>
 
@@ -525,33 +453,24 @@
 
 </body>
 <script>
-    // Format tanggal pendek (d/m/yy) — hemat ruang di 58mm
-    document.querySelectorAll('.tgl-short').forEach(el => {
+    // Format tanggal panjang (dd/mm/yyyy)
+    document.querySelectorAll('.tgl-sys').forEach(el => {
         const d = new Date(el.dataset.date + 'T00:00:00');
-        const dd = d.getDate();
-        const mm = d.getMonth() + 1;
-        const yy = d.getFullYear();
-        el.textContent = dd + '/' + mm + '/' + yy;
+        el.textContent = d.toLocaleDateString('id-ID');
     });
 
     // Format tanggal + jam
     document.querySelectorAll('.tgl-sys-dt').forEach(el => {
         const d = new Date(el.dataset.dt);
-        const dd = d.getDate();
-        const mm = d.getMonth() + 1;
-        const yy = d.getFullYear();
-        const hh = String(d.getHours()).padStart(2, '0');
-        const mi = String(d.getMinutes()).padStart(2, '0');
-        el.textContent = dd + '/' + mm + '/' + yy + ' ' + hh + ':' + mi;
+        el.textContent = d.toLocaleDateString('id-ID') + ' ' +
+            d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
     });
 
     // Format tanggal panjang di date group header
     document.querySelectorAll('.tgl-long').forEach(el => {
         const d = new Date(el.dataset.date + 'T00:00:00');
-        const dd = d.getDate();
-        const mm = d.getMonth() + 1;
-        const yy = d.getFullYear();
-        el.textContent = dd + '/' + mm + '/' + yy;
+        const options = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
+        el.textContent = d.toLocaleDateString('id-ID', options);
     });
 
     // Pilih ukuran thermal
@@ -564,11 +483,10 @@
 
         let s = document.getElementById('dps');
         if (!s) { s = document.createElement('style'); s.id = 'dps'; document.head.appendChild(s); }
-        s.textContent = `@media print { @page { size: ${mm}mm auto; margin:0; } body { width:${mm}mm; padding:1.5mm; } }`;
+        s.textContent = `@media print { @page { size: ${mm}mm auto; margin:0; } body { width:${mm}mm; } }`;
     }
 
-    // Default: 58mm (sesuai printer thermal user)
-    setSize(58);
+    setSize(80);
     window.addEventListener('load', () => window.print());
 </script>
 </html>
