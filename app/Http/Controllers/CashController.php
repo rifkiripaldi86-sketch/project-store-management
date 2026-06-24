@@ -7,8 +7,7 @@ use Illuminate\Http\Request;
 
 class CashController extends Controller
 {
-<<<<<<< HEAD
-public function index(Request $request)
+    public function index(Request $request)
     {
         // 1. Inisialisasi Query dasar dengan relasi createdBy
         $query = CashFlow::with('createdBy')->latest();
@@ -34,67 +33,16 @@ public function index(Request $request)
             $query->whereDate('tanggal', '<=', $request->sampai);
         }
 
-        // 5. Hitung Total Masuk & Keluar secara akurat berdasarkan filter (sebelum ter-paginate)
+        // 5. Hitung Total Masuk & Keluar secara akurat berdasarkan database keseluruhan
         $totalMasuk  = (clone $query)->where('tipe', 'masuk')->sum('jumlah') ?? 0;
         $totalKeluar = (clone $query)->where('tipe', 'keluar')->sum('jumlah') ?? 0;
 
-        // 6. Ambil data akhir dengan pagination
+        // 6. Ambil data akhir dengan pagination untuk tabel
         $cashFlows = $query->paginate(10);
 
         return view('cash.index', compact('cashFlows', 'totalMasuk', 'totalKeluar'));
     }
-=======
-   public function index(Request $request)
-{
-    // =========================
-    // TABLE QUERY (PAKAI FILTER)
-    // =========================
-    $tableQuery = CashFlow::query();
 
-    if ($request->filled('search')) {
-        $tableQuery->where(function ($q) use ($request) {
-            $q->where('keterangan', 'like', '%' . $request->search . '%')
-              ->orWhere('kategori', 'like', '%' . $request->search . '%');
-        });
-    }
-
-    if ($request->filled('tipe')) {
-        $tableQuery->where('tipe', $request->tipe);
-    }
-
-    if ($request->filled('dari')) {
-        $tableQuery->whereDate('tanggal', '>=', $request->dari);
-    }
-
-    if ($request->filled('sampai')) {
-        $tableQuery->whereDate('tanggal', '<=', $request->sampai);
-    }
-
-    // =========================
-    // TABLE DATA
-    // =========================
-    $cashFlows = (clone $tableQuery)
-        ->latest()
-        ->paginate(10);
-
-    // =========================
-    // SUMMARY (TANPA FILTER)
-    // =========================
-    $kasMasuk = CashFlow::where('tipe', 'masuk')->sum('jumlah');
-
-$kasKeluar = CashFlow::where('tipe', 'keluar')->sum('jumlah');
-
-$saldo = $kasMasuk - $kasKeluar;
-
-    return view('cash.index', compact(
-        'cashFlows',
-        'kasMasuk',
-        'kasKeluar',
-        'saldo'
-    ));
-}
-
->>>>>>> 009963ac02f0fe5109ac149256394b6c224ec3b8
     public function create()
     {
         return view('cash.create');
