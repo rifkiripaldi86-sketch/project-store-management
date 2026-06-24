@@ -40,15 +40,16 @@ private function getSupplierReport(int $supplierId, Carbon $start, Carbon $end):
             ->value('harga_jual') ?? ($product->harga_jual ?? 0);
 
         $rows[] = [
-            'no'        => $no++,
-            'tanggal'   => $end->format('d/m/Y'),
-            'produk'    => $product->nama_produk,
-            'hargaBeli' => $product->harga_beli ?? 0,
-            'stok'      => $stok, // Sekarang akan muncul 102
-            'laku'      => $laku,
-            'sisa'      => max(0, $stok - $laku),
-            'penjualan' => $hargaJual * $laku,
-        ];
+    'no'         => $no++,
+    'tanggal'    => $end->format('d/m/Y'),
+    'produk'     => $product->nama_produk,
+    'hargaBeli'  => $product->harga_beli ?? 0,
+    'hargaJual'  => $hargaJual,
+    'stok'       => $stok,
+    'laku'       => $laku,
+    'sisa'       => max(0, $stok - $laku),
+    'penjualan'  => $hargaJual * $laku,
+];
     }
     return $rows;
 }
@@ -85,7 +86,7 @@ public function daily(Request $request)
         // Ambil list produk untuk tabel detail
         $saleItems = $itemsQuery
         ->selectRaw('product_id, SUM(laku) as total_quantity, SUM(sub_total) as total_amount')
-        ->with('product:id,nama_produk,harga_jual') // FIX: Hapus harga_beli dari sini
+        ->with('product:id,nama_produk,harga_jual,harga_beli,current_stock') // FIX: Tambahkan harga_beli ke sini
         ->groupBy('product_id')
         ->get();
 

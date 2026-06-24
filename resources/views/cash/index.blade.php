@@ -216,9 +216,7 @@
 
 {{-- Summary Cards --}}
 @php
-    $totalMasuk  = $cashFlows->where('tipe', 'masuk')->sum('jumlah');
-    $totalKeluar = $cashFlows->where('tipe', 'keluar')->sum('jumlah');
-    $saldo       = $totalMasuk - $totalKeluar;
+    $saldo = $totalMasuk - $totalKeluar;
 @endphp
 
 <div class="row g-3 mb-4">

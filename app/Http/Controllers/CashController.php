@@ -7,19 +7,41 @@ use Illuminate\Http\Request;
 
 class CashController extends Controller
 {
-    public function index()
+public function index(Request $request)
     {
-        $cashFlows = CashFlow::latest()->paginate(10);
+        // 1. Inisialisasi Query dasar dengan relasi createdBy
+        $query = CashFlow::with('createdBy')->latest();
 
-        // Hitung saldo sekali dengan satu query
-        $saldo = CashFlow::selectRaw("
-            SUM(CASE WHEN tipe = 'masuk' THEN jumlah ELSE 0 END) -
-            SUM(CASE WHEN tipe = 'keluar' THEN jumlah ELSE 0 END) as saldo
-        ")->value('saldo') ?? 0;
+        // 2. Terapkan Filter Search (Keterangan / Kategori)
+        if ($request->filled('search')) {
+            $query->where(function($q) use ($request) {
+                $q->where('keterangan', 'like', '%' . $request->search . '%')
+                  ->orWhere('kategori', 'like', '%' . $request->search . '%');
+            });
+        }
 
-        return view('cash.index', compact('cashFlows', 'saldo'));
+        // 3. Terapkan Filter Tipe (Masuk / Keluar)
+        if ($request->filled('tipe')) {
+            $query->where('tipe', $request->tipe);
+        }
+
+        // 4. Terapkan Filter Rentang Tanggal (Dari & Sampai)
+        if ($request->filled('dari')) {
+            $query->whereDate('tanggal', '>=', $request->dari);
+        }
+        if ($request->filled('sampai')) {
+            $query->whereDate('tanggal', '<=', $request->sampai);
+        }
+
+        // 5. Hitung Total Masuk & Keluar secara akurat berdasarkan filter (sebelum ter-paginate)
+        $totalMasuk  = (clone $query)->where('tipe', 'masuk')->sum('jumlah') ?? 0;
+        $totalKeluar = (clone $query)->where('tipe', 'keluar')->sum('jumlah') ?? 0;
+
+        // 6. Ambil data akhir dengan pagination
+        $cashFlows = $query->paginate(10);
+
+        return view('cash.index', compact('cashFlows', 'totalMasuk', 'totalKeluar'));
     }
-
     public function create()
     {
         return view('cash.create');

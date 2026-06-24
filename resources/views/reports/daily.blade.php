@@ -298,60 +298,81 @@
     </div>
     <table class="data-table">
         <thead>
-            <tr>
-                <th>Produk</th>
-                <th class="text-right">Modal Satuan</th>
-                <th class="text-right">Harga Jual</th>
-                <th class="text-right">Jumlah Terjual</th>
-                <th class="text-right">Total (Rp)</th>
-            </tr>
+        <tr>
+        <th>No.</th>
+        <th>Tanggal</th>
+        <th>Produk</th>
+        <th class="text-right">Harga Beli</th>
+        <th class="text-right">Harga Jual</th>
+        <th class="text-right">Laku</th>
+        <th class="text-right">Stok</th>
+        <th class="text-right">Total Penjualan</th>
+    </tr>
         </thead>
 <tbody>
-        @forelse($saleItems ?? [] as $item)
-            @php
-                // Mengambil nama produk dari variabel query atau relasi model
-                $namaProduk = $item->product_name ?? ($item->product->nama_produk ?? 'Produk Tidak Diketahui');
+@forelse($saleItems ?? [] as $i => $item)
+    @php
+        $namaProduk = $item->product_name ?? ($item->product->nama_produk ?? 'Produk Tidak Diketahui');
 
-                // Mengambil jumlah terjual
-                $jumlahTerjual = $item->total_quantity ?? ($item->laku ?? ($item->jumlah ?? 0));
+        $jumlahTerjual = $item->total_quantity ?? ($item->laku ?? ($item->jumlah ?? 0));
 
-                // Menentukan harga jual
-                if (isset($item->harga_jual) && $item->harga_jual > 0) {
-                    $hargaJual = $item->harga_jual;
-                } elseif (isset($item->harga) && $item->harga > 0) {
-                    $hargaJual = $item->harga;
-                } else {
-                    $hargaJual = $item->product->harga_jual ?? 0;
-                }
+        $hargaJual = $item->harga_jual
+            ?? $item->harga
+            ?? ($item->product->harga_jual ?? 0);
 
-                // Menentukan harga beli
-                $hargaBeli = $item->harga_beli ?? ($item->product->harga_beli ?? 0);
+        $hargaBeli = $item->harga_beli
+            ?? ($item->product->harga_beli ?? 0);
 
-                // Hitung total akhir baris
-                $totalPenjualan = $jumlahTerjual * $hargaJual;
-            @endphp
-            <tr>
-                <td>{{ $namaProduk }}</td>
-                <td class="text-right mono">Rp {{ number_format($hargaBeli, 0, ',', '.') }}</td>
-                <td class="text-right mono">Rp {{ number_format($hargaJual, 0, ',', '.') }}</td>
-                <td class="text-right">{{ number_format($jumlahTerjual, 0, ',', '.') }} pcs</td>
-                <td class="text-right mono">Rp {{ number_format($totalPenjualan, 0, ',', '.') }}</td>
-            </tr>
-        @empty
-            <tr class="empty-row"><td colspan="5">Tidak ada penjualan hari ini</td></tr>
-        @endforelse
-        </tbody>
+        $stokSisa = $item->stock_remaining
+            ?? $item->sisa_stok
+            ?? ($item->product->current_stock ?? 0);
+
+        $tanggal = $item->created_at
+            ?? $item->tanggal
+            ?? now();
+
+        $totalPenjualan = $jumlahTerjual * $hargaJual;
+    @endphp
+
+    <tr>
+        <td>{{ $i + 1 }}</td>
+        <td>{{ \Carbon\Carbon::parse($tanggal)->format('d-m-Y') }}</td>
+        <td>{{ $namaProduk }}</td>
+        <td class="text-right mono">Rp {{ number_format($hargaBeli, 0, ',', '.') }}</td>
+        <td class="text-right mono">Rp {{ number_format($hargaJual, 0, ',', '.') }}</td>
+        <td class="text-right">{{ number_format($jumlahTerjual, 0, ',', '.') }} pcs</td>
+        <td class="text-right">{{ number_format($stokSisa, 0, ',', '.') }} pcs</td>
+        <td class="text-right mono">Rp {{ number_format($totalPenjualan, 0, ',', '.') }}</td>
+    </tr>
+@empty
+    <tr class="empty-row">
+        <td colspan="8">Tidak ada penjualan hari ini</td>
+    </tr>
+@endforelse
+</tbody>
 
         {{-- FIX: Cek jika data ada menggunakan method Collection, dan perbaikan penutup tag tfoot --}}
         @if(isset($saleItems) && $saleItems->isNotEmpty())
         <tfoot>
-            <tr>
-                <td colspan="3" style="font-weight:600;">Total</td>
-                <td class="text-right" style="font-weight:600;">{{ number_format($barangTerjual, 0, ',', '.') }} pcs</td>
-                {{-- FIX LOGIKA: Menjumlahkan total_amount langsung dari data item agar sinkron --}}
-                <td class="text-right mono" style="font-weight:700;">Rp {{ number_format($saleItems->sum('total_amount'), 0, ',', '.') }}</td>
-            </tr>
-        </tfoot>
+    <tr>
+        <td colspan="5" style="font-weight:600;">Total</td>
+
+        {{-- TOTAL LAKU (kolom 6) --}}
+        <td class="text-right" style="font-weight:600;">
+            {{ number_format($barangTerjual, 0, ',', '.') }} pcs
+        </td>
+
+        {{-- STOK (biasanya kosong / tidak dijumlahkan) --}}
+        <td class="text-right" style="font-weight:600;">
+            -
+        </td>
+
+        {{-- TOTAL PENJUALAN (kolom 8) --}}
+        <td class="text-right mono" style="font-weight:700;">
+            Rp {{ number_format($saleItems->sum('total_amount'), 0, ',', '.') }}
+        </td>
+    </tr>
+</tfoot>
         @endif
     </table>
 {{-- Kas Masuk & Keluar --}}
