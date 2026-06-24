@@ -249,7 +249,7 @@
                     </div>
                     <div>
                         <input type="number" name="items[0][harga_jual]" class="form-control price-input"
-                            placeholder="0" min="0" step="1" required>
+                            placeholder="0" min="0" step="1" readonly required>
                     </div>
                     <div class="subtotal-display empty" id="subtotal-0">—</div>
                     <button type="button" class="btn-remove-row" title="Hapus baris">
@@ -302,7 +302,7 @@
         </div>
         <div>
             <input type="number" name="items[__INDEX__][harga_jual]" class="form-control price-input"
-                placeholder="0" min="0" step="1" required>
+                placeholder="0" min="0" step="1" readonly required>
         </div>
         <div class="subtotal-display empty" id="subtotal-__INDEX__">—</div>
         <button type="button" class="btn-remove-row" title="Hapus baris">
@@ -356,17 +356,24 @@
         const stokHint   = row.querySelector('.stok-hint');
 
         select.addEventListener('change', () => {
-            const opt  = select.selectedOptions[0];
-            const stok = parseInt(opt?.dataset?.stok ?? 0);
-            if (select.value && !isNaN(stok)) {
-                stokHint.textContent = `Stok tersedia: ${stok} unit`;
-                stokHint.className   = 'stok-hint show' + (stok < 5 ? ' low' : '');
-            } else {
-                stokHint.className = 'stok-hint';
-            }
-            updateRowSubtotal(row);
-            updateGrandTotalAndCount();
-        });
+    const opt   = select.selectedOptions[0];
+    const stok  = parseInt(opt?.dataset?.stok ?? 0);
+    const harga = parseFloat(opt?.dataset?.harga ?? 0);
+
+    // isi otomatis harga jual dari master data
+    priceInput.value = harga;
+
+    if (select.value && !isNaN(stok)) {
+        stokHint.textContent = `Stok tersedia: ${stok} unit`;
+        stokHint.className   = 'stok-hint show' + (stok < 5 ? ' low' : '');
+    } else {
+        stokHint.className = 'stok-hint';
+        priceInput.value = '';
+    }
+
+    updateRowSubtotal(row);
+    updateGrandTotalAndCount();
+});
 
         const recalc = () => {
             updateRowSubtotal(row);
@@ -423,29 +430,37 @@
 
     // Fungsi pembantu untuk mengisi opsi produk berdasarkan supplier id secara real-time
     function populateProductOptions(selectElement, supplierId) {
-        if (!supplierId) {
-            selectElement.innerHTML = '<option value="">⚠️ Pilih Supplier Terlebih Dahulu</option>';
-            selectElement.disabled = true;
-            return;
-        }
-
-        let options = '<option value="">— Pilih Produk —</option>';
-        let hasProducts = false;
-
-        PRODUCTS.forEach(product => {
-            if (product.supplier_id == supplierId) {
-                options += `<option value="${product.id}" data-stok="${product.stok}">${product.nama_produk} (Stok: ${product.stok})</option>`;
-                hasProducts = true;
-            }
-        });
-
-        if (!hasProducts) {
-            options = '<option value="">❌ Tidak ada produk untuk supplier ini</option>';
-        }
-
-        selectElement.innerHTML = options;
-        selectElement.disabled = false;
+    if (!supplierId) {
+        selectElement.innerHTML =
+            '<option value="">⚠️ Pilih Supplier Terlebih Dahulu</option>';
+        selectElement.disabled = true;
+        return;
     }
+
+    let options = '<option value="">— Pilih Produk —</option>';
+    let hasProducts = false;
+
+    PRODUCTS.forEach(product => {
+        if (product.supplier_id == supplierId) {
+            options += `
+                <option
+                    value="${product.id}"
+                    data-stok="${product.stok}"
+                    data-harga="${product.harga_jual}">
+                    ${product.nama_produk} (Stok: ${product.stok})
+                </option>
+            `;
+            hasProducts = true;
+        }
+    });
+
+    if (!hasProducts) {
+        options = '<option value="">❌ Tidak ada produk untuk supplier ini</option>';
+    }
+
+    selectElement.innerHTML = options;
+    selectElement.disabled = false;
+}
 
     // LOGIKA UTAMA: Ketika Supplier dipilih (tanpa relog)
     document.getElementById('supplier_id').addEventListener('change', function () {
@@ -465,19 +480,7 @@
     // Jalankan binding untuk baris default pertama kali load
     document.querySelectorAll('.item-row').forEach((row, idx) => {
         bindRowEvents(row, idx);
-        const select = row.querySelector('.product-select');
-        const priceInput = row.querySelector('.price-input');
-        select.addEventListener('change', () => {
-    const opt = select.selectedOptions[0];
-    const harga = opt?.dataset?.harga || 0;
-
-    // Isi otomatis input harga agar tidak kosong saat disubmit
-    priceInput.value = harga;
-
-    // ... (update stok hint & subtotal)
-    updateRowSubtotal(row);
-    updateGrandTotalAndCount();
-});
+        
     });
 
     updateGrandTotalAndCount();

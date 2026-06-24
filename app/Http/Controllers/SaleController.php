@@ -36,13 +36,14 @@ public function index()
         }
 
         $products_json = $products->map(function ($p) {
-            return [
-                'id'          => $p->id,
-                'nama_produk' => $p->nama_produk,
-                'stok'        => $p->current_stock,
-                'supplier_id' => $p->supplier_id,
-            ];
-        })->values();
+    return [
+        'id'          => $p->id,
+        'nama_produk' => $p->nama_produk,
+        'stok'        => $p->current_stock,
+        'supplier_id' => $p->supplier_id,
+        'harga_jual'  => $p->harga_jual,
+    ];
+})->values();
 
         return view('sales.create', compact('products', 'suppliers', 'products_json'));
     }

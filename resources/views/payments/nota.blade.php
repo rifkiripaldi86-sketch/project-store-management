@@ -5,12 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nota Supplier - {{ $payment->supplier->nama_supplier }}</title>
 <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
+    body, body *, table, th, td, span, div 
+    {font-weight: bold !important;
+}
     body {
         font-family: 'Courier New', Courier, monospace;
         font-size: 11px;
-        width: 80mm;
+        width: 58mm;
+        font-weight: bold;
         margin: 0 auto;
         padding: 5mm 4mm;
         background: #fff;
@@ -28,8 +30,8 @@
     }
 
     @media print {
-        @page { size: 80mm auto; margin: 0; }
-        body { width: 80mm; padding: 3mm; }
+        @page { size: 58mm auto; margin: 0; }
+        body { width: 58mm; padding: 3mm; }
         .no-print { display: none !important; }
     }
 

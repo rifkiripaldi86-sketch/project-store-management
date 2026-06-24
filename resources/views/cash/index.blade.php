@@ -215,9 +215,12 @@
 </div>
 
 {{-- Summary Cards --}}
+<<<<<<< HEAD
 @php
     $saldo = $totalMasuk - $totalKeluar;
 @endphp
+=======
+>>>>>>> 009963ac02f0fe5109ac149256394b6c224ec3b8
 
 <div class="row g-3 mb-4">
     <div class="col-12 col-sm-4 animate-in">
@@ -226,8 +229,8 @@
                 <span class="summary-label">Kas Masuk</span>
                 <div class="summary-icon"><i class="fas fa-arrow-down-to-bracket"></i></div>
             </div>
-            <div class="summary-value" data-count="{{ $totalMasuk }}" data-prefix="Rp " data-format="currency">
-                Rp {{ number_format($totalMasuk, 0, ',', '.') }}
+            <div class="summary-value" data-count="{{ $kasMasuk }}" data-prefix="Rp " data-format="currency">
+                Rp {{ number_format($kasMasuk, 0, ',', '.') }}
             </div>
             <div class="summary-sub">Total pemasukan periode ini</div>
         </div>
@@ -238,8 +241,8 @@
                 <span class="summary-label">Kas Keluar</span>
                 <div class="summary-icon"><i class="fas fa-arrow-up-from-bracket"></i></div>
             </div>
-            <div class="summary-value" data-count="{{ $totalKeluar }}" data-prefix="Rp " data-format="currency">
-                Rp {{ number_format($totalKeluar, 0, ',', '.') }}
+            <div class="summary-value" data-count="{{ $kasKeluar }}" data-prefix="Rp " data-format="currency">
+                Rp {{ number_format($kasKeluar, 0, ',', '.') }}
             </div>
             <div class="summary-sub">Total pengeluaran periode ini</div>
         </div>

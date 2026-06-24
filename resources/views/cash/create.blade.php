@@ -368,7 +368,43 @@ document.addEventListener('keydown', e => {
 const tipeInputs   = document.querySelectorAll('input[name="tipe"]');
 const kategoriSel  = document.getElementById('kategori');
 
-const defaults = { masuk: 'penjualan', keluar: 'operasional' };
+const kategoriSel = document.getElementById('kategori');
+
+const kategoriOptions = {
+    masuk: [
+        {value: 'penjualan', text: 'Penjualan'},
+        {value: 'lainnya', text: 'Lainnya'}
+    ],
+    keluar: [
+        {value: 'bayar_supplier', text: 'Bayar Supplier'},
+        {value: 'operasional', text: 'Operasional'},
+        {value: 'lainnya', text: 'Lainnya'}
+    ]
+};
+
+function updateKategori(tipe) {
+    kategoriSel.innerHTML = '<option value="">— Pilih kategori —</option>';
+
+    kategoriOptions[tipe].forEach(item => {
+        kategoriSel.innerHTML += `
+            <option value="${item.value}">
+                ${item.text}
+            </option>
+        `;
+    });
+}
+
+document.querySelectorAll('input[name="tipe"]').forEach(radio => {
+    radio.addEventListener('change', function () {
+        updateKategori(this.value);
+    });
+});
+
+// Saat halaman pertama kali dibuka
+const selectedTipe = document.querySelector('input[name="tipe"]:checked');
+if (selectedTipe) {
+    updateKategori(selectedTipe.value);
+}
 
 tipeInputs.forEach(input => {
     input.addEventListener('change', () => {
