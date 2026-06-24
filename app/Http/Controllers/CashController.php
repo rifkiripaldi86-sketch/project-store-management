@@ -7,18 +7,55 @@ use Illuminate\Http\Request;
 
 class CashController extends Controller
 {
-    public function index()
-    {
-        $cashFlows = CashFlow::latest()->paginate(10);
+   public function index(Request $request)
+{
+    // =========================
+    // TABLE QUERY (PAKAI FILTER)
+    // =========================
+    $tableQuery = CashFlow::query();
 
-        // Hitung saldo sekali dengan satu query
-        $saldo = CashFlow::selectRaw("
-            SUM(CASE WHEN tipe = 'masuk' THEN jumlah ELSE 0 END) -
-            SUM(CASE WHEN tipe = 'keluar' THEN jumlah ELSE 0 END) as saldo
-        ")->value('saldo') ?? 0;
-
-        return view('cash.index', compact('cashFlows', 'saldo'));
+    if ($request->filled('search')) {
+        $tableQuery->where(function ($q) use ($request) {
+            $q->where('keterangan', 'like', '%' . $request->search . '%')
+              ->orWhere('kategori', 'like', '%' . $request->search . '%');
+        });
     }
+
+    if ($request->filled('tipe')) {
+        $tableQuery->where('tipe', $request->tipe);
+    }
+
+    if ($request->filled('dari')) {
+        $tableQuery->whereDate('tanggal', '>=', $request->dari);
+    }
+
+    if ($request->filled('sampai')) {
+        $tableQuery->whereDate('tanggal', '<=', $request->sampai);
+    }
+
+    // =========================
+    // TABLE DATA
+    // =========================
+    $cashFlows = (clone $tableQuery)
+        ->latest()
+        ->paginate(10);
+
+    // =========================
+    // SUMMARY (TANPA FILTER)
+    // =========================
+    $kasMasuk = CashFlow::where('tipe', 'masuk')->sum('jumlah');
+
+$kasKeluar = CashFlow::where('tipe', 'keluar')->sum('jumlah');
+
+$saldo = $kasMasuk - $kasKeluar;
+
+    return view('cash.index', compact(
+        'cashFlows',
+        'kasMasuk',
+        'kasKeluar',
+        'saldo'
+    ));
+}
 
     public function create()
     {

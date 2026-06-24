@@ -196,13 +196,9 @@
             <i class="fas fa-calculator" style="font-size:13px;"></i> Hitung &amp; Simpan
         </button>
         <a href="{{ route('dashboard') }}" class="btn"
-            style="height:38px; font-size:13.5px; border-radius:var(--r-sm); padding:0 16px;
-                   border:1px solid var(--border); color:var(--ink-soft);">
+             class="btn btn-primary d-flex align-items-center gap-2"
+            style="height:38px; font-size:13.5px; font-weight:600; border-radius:var(--r-sm); padding:0 20px;">
             Batal
-        </a>
-        <a href="{{ route('payments.history') }}"
-            class="btn btn-secondary"><i class="fas fa-history"></i>
-            Riwayat Nota
         </a>
         <span style="margin-left:auto; font-size:12px; color:var(--ink-muted); display:flex; align-items:center; gap:5px;">
             <kbd class="kbd">Ctrl</kbd> + <kbd class="kbd">Enter</kbd> untuk simpan

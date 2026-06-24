@@ -343,12 +343,11 @@ const TICKS_Y = {
 /* ─────────────────────────────────────────────────────
    Sales Chart (line + area)
 ───────────────────────────────────────────────────── */
-const salesData = @json($sales7days);
-const salesLabels = Object.keys(salesData);
-const salesValues = Object.values(salesData);
+const salesValues = @json($sales7days);
+const salesLabels = @json($labels7days);
 
 // Compute total
-const salesTotal = salesValues.reduce((a, b) => a + b, 0);
+const salesTotal = (salesValues || []).reduce((a, b) => a + b, 0);
 document.getElementById('sales-total').textContent = fmtRp(salesTotal);
 
 const salesCtx = document.getElementById('salesChart').getContext('2d');

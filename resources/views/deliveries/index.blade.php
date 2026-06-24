@@ -192,15 +192,17 @@
         </div>
     </div>
     <div class="col-12 col-sm-4 animate-in">
-        <div class="summary-card violet">
-            <div class="summary-top">
-                <span class="summary-label">Total Produk</span>
-                <div class="summary-icon"><i class="fas fa-box-open"></i></div>
-            </div>
-            <div class="summary-value">{{ $totalProduk }}</div>
-            <div class="summary-sub">Jenis produk diterima</div>
+    <div class="summary-card amber">
+        <div class="summary-top">
+            <span class="summary-label">Stok Masuk</span>
+            <div class="summary-icon"><i class="fas fa-arrow-down-wide-short"></i></div>
         </div>
+        <div class="summary-value">
+            {{ $totalStokMasuk }}
+        </div>
+        <div class="summary-sub">Total barang diterima</div>
     </div>
+</div>
     <div class="col-12 col-sm-4 animate-in">
         <div class="summary-card amber">
             <div class="summary-top">
@@ -269,8 +271,9 @@
                     <th style="width:44px;">#</th>
                     <th>Tanggal</th>
                     <th>Supplier</th>
-                    <th>Produk</th>
-                    <th style="text-align:right;">Nilai</th>
+                    <th>Nama Produk</th>
+                    <th>Stok</th>
+                    <th style="text-align:center;">Harga Beli</th>
                     <th>Diinput Oleh</th>
                     <th style="text-align:center; width:80px;">Aksi</th>
                 </tr>
@@ -295,14 +298,22 @@
                         </div>
                     </td>
                     <td>
-                        <span class="item-count">
-                            <i class="fas fa-cube" style="font-size:10px;"></i>
-                            {{ $delivery->items->count() }} produk
-                        </span>
+                        @foreach($delivery->items as $item)
+                        <div>{{ $item->product->nama_produk ?? '-' }}</div>
+                        @endforeach
                     </td>
-                    <td style="text-align:right; white-space:nowrap; font-weight:600; color:var(--ink);">
-                        Rp {{ number_format($nilaiKiriman, 0, ',', '.') }}
+                    <td>
+                        @foreach($delivery->items as $item)
+                        <div>{{ number_format($item->jumlah_kirim) }}</div>
+                        @endforeach
                     </td>
+                    <td>
+                        @foreach($delivery->items as $item)
+                        <div>
+                            Rp {{ number_format($item->harga, 0, ',', '.') }}
+                            </div>
+                        @endforeach
+</td>
                     <td style="color:var(--ink-soft);">
                         <div style="display:flex; align-items:center; gap:6px;">
                             <div style="width:24px; height:24px; background:var(--accent-soft); border-radius:50%;

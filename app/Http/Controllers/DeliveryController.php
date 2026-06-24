@@ -55,6 +55,15 @@ class DeliveryController extends Controller
             ->selectRaw('SUM(delivery_items.jumlah_kirim * delivery_items.harga) as total')
             ->value('total') ?? 0;
 
+        $totalJenisProduk = (clone $query)
+        ->join('delivery_items', 'deliveries.id', '=', 'delivery_items.delivery_id')
+        ->distinct('delivery_items.product_id')
+        ->count('delivery_items.product_id');
+
+        $totalStokMasuk = (clone $query)
+        ->join('delivery_items', 'deliveries.id', '=', 'delivery_items.delivery_id')
+        ->sum('delivery_items.jumlah_kirim');
+
         // Paginasi hasil
         $deliveries = $query->latest('tanggal')->paginate(10);
 
@@ -62,9 +71,9 @@ class DeliveryController extends Controller
             'deliveries',
             'suppliers',
             'totalKiriman',
-            'totalProduk',
-            'totalNilai'
-        ));
+            'totalNilai',
+            'totalStokMasuk'
+            ));
     }
 
     public function create()

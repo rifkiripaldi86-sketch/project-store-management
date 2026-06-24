@@ -5,12 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nota Supplier - {{ $payment->supplier->nama_supplier }}</title>
 <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
+    body, body *, table, th, td, span, div 
+    {font-weight: bold !important;
+}
     body {
         font-family: 'Courier New', Courier, monospace;
         font-size: 11px;
-        width: 80mm;
+        width: 58mm;
+        font-weight: bold;
         margin: 0 auto;
         padding: 5mm 4mm;
         background: #fff;
@@ -28,8 +30,8 @@
     }
 
     @media print {
-        @page { size: 80mm auto; margin: 0; }
-        body { width: 80mm; padding: 3mm; }
+        @page { size: 58mm auto; margin: 0; }
+        body { width: 58mm; padding: 3mm; }
         .no-print { display: none !important; }
     }
 
@@ -300,8 +302,8 @@
 
     {{-- Tombol ukuran (tidak cetak) --}}
     <div class="no-print size-toggle">
-        <button onclick="setSize(80)" class="btn btn-outline active" id="btn80">📄 80mm</button>
-        <button onclick="setSize(58)" class="btn btn-outline" id="btn58">🧾 58mm</button>
+        <button onclick="setSize(80)" class="btn btn-outline" id="btn80">📄 80mm</button>
+        <button onclick="setSize(58)" class="btn btn-outline active" id="btn58">🧾 58mm</button>
     </div>
 
     {{-- ═══ Header ═══ --}}
@@ -432,11 +434,11 @@
     <div class="signature">
         <div class="sig-block">
             <span class="sig-label">Penerima,</span>
-            <div class="sig-line">(..............)</div>
+            <div class="sig-line">(...................)</div>
         </div>
         <div class="sig-block">
             <span class="sig-label">Hormat Kami,</span>
-            <div class="sig-line">(TOKO KUE SARI REZEKI)</div>
+            <div class="sig-line">(...................)</div>
         </div>
     </div>
 
@@ -483,10 +485,11 @@
 
         let s = document.getElementById('dps');
         if (!s) { s = document.createElement('style'); s.id = 'dps'; document.head.appendChild(s); }
-        s.textContent = `@media print { @page { size: ${mm}mm auto; margin:0; } body { width:${mm}mm; } }`;
+        s.textContent = `@media print { @page { size: ${mm}mm auto; margin:0; } body { width:${mm}mm; padding:1.5mm; } }`;
     }
 
-    setSize(80);
+    // Default: 58mm (sesuai printer thermal user)
+    setSize(58);
     window.addEventListener('load', () => window.print());
 </script>
 </html>
