@@ -34,13 +34,24 @@ class CashController extends Controller
         }
 
         // 5. Hitung Total Masuk & Keluar secara akurat berdasarkan database keseluruhan
+        // Mengikuti filter
         $totalMasuk  = (clone $query)->where('tipe', 'masuk')->sum('jumlah') ?? 0;
         $totalKeluar = (clone $query)->where('tipe', 'keluar')->sum('jumlah') ?? 0;
+
+        // Tidak mengikuti filter
+        $saldoBersih = CashFlow::where('tipe', 'masuk')->sum('jumlah')
+        -
+        CashFlow::where('tipe', 'keluar')->sum('jumlah');
 
         // 6. Ambil data akhir dengan pagination untuk tabel
         $cashFlows = $query->paginate(10);
 
-        return view('cash.index', compact('cashFlows', 'totalMasuk', 'totalKeluar'));
+        return view('cash.index', compact(
+    'cashFlows',
+    'totalMasuk',
+    'totalKeluar',
+    'saldoBersih'
+));
     }
 
     public function create()

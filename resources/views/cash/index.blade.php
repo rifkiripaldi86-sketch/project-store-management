@@ -215,7 +215,7 @@
 </div>
 
 @php
-    $saldo = $totalMasuk - $totalKeluar;
+    $saldo = $saldoBersih;
 @endphp
 
 <div class="row g-3 mb-4">
