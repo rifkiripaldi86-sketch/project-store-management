@@ -6,7 +6,10 @@ use App\Models\Product;
 use App\Models\Supplier;
 use App\Models\Category;
 use App\Models\Unit;
+use App\Models\Delivery;
+use App\Models\DeliveryItem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
@@ -63,53 +66,70 @@ class ProductController extends Controller
         ]);
 
         $existing = Product::withTrashed()
-            ->where('nama_produk', $request->nama_produk)
-            ->where('supplier_id', $request->supplier_id)
-            ->first();
+        ->where('nama_produk', $request->nama_produk)
+        ->where('supplier_id', $request->supplier_id)
+        ->first();
 
         if ($existing) {
-
             if ($existing->trashed()) {
-
                 $existing->restore();
-
-                // Update data produk yang dipulihkan dengan data baru
                 $existing->update([
                     'category_id'   => $request->category_id,
                     'unit_id'       => $request->unit_id,
                     'harga_beli'    => (int) $request->harga_beli,
                     'harga_jual'    => (int) $request->harga_jual,
                     'current_stock' => (int) $request->current_stock,
-                ]);
+            ]);
 
-                return redirect()
-                    ->route('products.index')
-                    ->with(
-                        'success',
-                        'Produk ditemukan di sampah dan berhasil dipulihkan!'
-                    );
+            return redirect()
+            ->route('products.index')
+            ->with(
+                'success',
+                'Produk ditemukan di sampah dan berhasil dipulihkan!'
+            );
             }
 
             return back()->with(
                 'error',
                 'Produk "' . $request->nama_produk . '" sudah terdaftar untuk supplier ini.'
             );
-        }
+}
 
-        Product::create([
-            'nama_produk'   => $request->nama_produk,
-            'supplier_id'   => $request->supplier_id,
-            'category_id'   => $request->category_id,
-            'unit_id'       => $request->unit_id,
-            'harga_beli'    => (int) $request->harga_beli,
-            'harga_jual'    => (int) $request->harga_jual,
-            'current_stock' => (int) $request->current_stock, // Cukup tulis sekali
+
+DB::transaction(function () use ($request) {
+
+    $product = Product::create([
+        'nama_produk'   => $request->nama_produk,
+        'supplier_id'   => $request->supplier_id,
+        'category_id'   => $request->category_id,
+        'unit_id'       => $request->unit_id,
+        'harga_beli'    => (int) $request->harga_beli,
+        'harga_jual'    => (int) $request->harga_jual,
+        'current_stock' => (int) $request->current_stock,
+    ]);
+
+    if ((int) $request->current_stock > 0) {
+
+        $delivery = Delivery::create([
+            'supplier_id' => $request->supplier_id,
+            'tanggal'     => now()->toDateString(),
+            'created_by'  => auth()->id(),
         ]);
 
-        return redirect()
-            ->route('products.index')
-            ->with('success', 'Produk berhasil ditambahkan.');
+        DeliveryItem::create([
+            'delivery_id'  => $delivery->id,
+            'product_id'   => $product->id,
+            'jumlah_kirim' => (int) $request->current_stock,
+            'harga'        => (int) $request->harga_beli,
+        ]);
     }
+});
+
+return redirect()
+    ->route('products.index')
+    ->with('success', 'Produk berhasil ditambahkan.');
+
+}
 
     public function edit(Product $product)
     {
@@ -126,33 +146,60 @@ class ProductController extends Controller
     }
 
     public function update(Request $request, Product $product)
-    {
-        $request->validate([
-            'nama_produk'   => 'required|string|max:255',
-            'supplier_id'   => 'required|exists:suppliers,id',
-            'category_id'   => 'required|exists:categories,id',
-            'unit_id'       => 'required|exists:units,id',
-            'harga_jual'    => 'required|numeric|min:0',
-            'harga_beli'    => 'required|numeric|min:0',
-            'current_stock' => 'required|integer|min:0',
+{
+$request->validate([
+'nama_produk'   => 'required|string|max:255',
+'supplier_id'   => 'required|exists:suppliers,id',
+'category_id'   => 'required|exists:categories,id',
+'unit_id'       => 'required|exists:units,id',
+'harga_jual'    => 'required|numeric|min:0',
+'harga_beli'    => 'required|numeric|min:0',
+'current_stock' => 'required|integer|min:0',
+]);
+
+DB::transaction(function () use ($request, $product) {
+
+    $stokLama = (int) $product->current_stock;
+    $stokBaru = (int) $request->current_stock;
+
+    $selisih = $stokBaru - $stokLama;
+
+    $product->update([
+        'nama_produk'   => $request->nama_produk,
+        'supplier_id'   => $request->supplier_id,
+        'category_id'   => $request->category_id,
+        'unit_id'       => $request->unit_id,
+        'harga_beli'    => (int) $request->harga_beli,
+        'harga_jual'    => (int) $request->harga_jual,
+        'current_stock' => $stokBaru,
+    ]);
+
+    // Jika stok ditambah, buat kiriman otomatis
+    if ($selisih > 0) {
+
+        $delivery = Delivery::create([
+            'supplier_id' => $request->supplier_id,
+            'tanggal'     => now()->toDateString(),
+            'created_by'  => auth()->id(),
         ]);
 
-        $product->update([
-            'nama_produk'   => $request->nama_produk,
-            'supplier_id'   => $request->supplier_id,
-            'category_id'   => $request->category_id,
-            'unit_id'       => $request->unit_id,
-            'harga_beli'    => (int) $request->harga_beli,
-            'harga_jual'    => (int) $request->harga_jual,
-            'current_stock' => (int) $request->current_stock,
+        DeliveryItem::create([
+            'delivery_id'  => $delivery->id,
+            'product_id'   => $product->id,
+            'jumlah_kirim' => $selisih,
+            'harga'        => (int) $request->harga_beli,
         ]);
-
-        return redirect()
-            ->route('products.index')
-            ->with('success', 'Produk berhasil diupdate.');
     }
+});
 
-    public function destroy(Product $product)
+return redirect()
+    ->route('products.index')
+    ->with('success', 'Produk berhasil diupdate.');
+
+}
+
+
+     public function destroy(Product $product)
     {
         $product->delete();
 

@@ -585,7 +585,7 @@
 
                     <a class="sb-item {{ request()->routeIs('damaged.*') ? 'active' : '' }}" href="{{ route('damaged.index') }}">
                         <span class="sb-icon"><i class="fas fa-triangle-exclamation"></i></span>
-                        <span class="sb-label">Barang Rusak</span>
+                        <span class="sb-label">Barang Sisa (Rusak)</span>
                     </a>
 
                     <a class="sb-item {{ request()->routeIs('units.*') ? 'active' : '' }}" href="{{ route('units.index') }}">

@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nota Supplier - {{ $payment->supplier->nama_supplier }}</title>
 <style>
-    body, body *, table, th, td, span, div 
-    {font-weight: bold !important;
-}
+    body, body *, table, th, td, span, div, p, label, strong {
+    font-weight: 900 !important;
+    }
     body {
         font-family: 'Courier New', Courier, monospace;
         font-size: 11px;
@@ -300,12 +300,6 @@
 </head>
 <body id="notaBody">
 
-    {{-- Tombol ukuran (tidak cetak) --}}
-    <div class="no-print size-toggle">
-        <button onclick="setSize(80)" class="btn btn-outline active" id="btn80">📄 80mm</button>
-        <button onclick="setSize(58)" class="btn btn-outline" id="btn58">🧾 58mm</button>
-    </div>
-
     {{-- ═══ Header ═══ --}}
     <div class="header">
         <h3>{{ strtoupper($storeName) }}</h3>
@@ -371,7 +365,7 @@
         @endphp
 
         <div style="margin-bottom:6px;">
-            <div style="font-weight:bold; font-size:12px;">
+            <div style="font-weight:900; font-size:12px;">
     {{ $row['nama_produk'] }}
 </div>
 
@@ -427,18 +421,6 @@
         <div class="total-line">
             <span>TOTAL BAYAR</span>
             <span>Rp {{ number_format($grandBayar, 0, ',', '.') }}</span>
-        </div>
-    </div>
-
-    {{-- ═══ Tanda tangan ═══ --}}
-    <div class="signature">
-        <div class="sig-block">
-            <span class="sig-label">Penerima,</span>
-            <div class="sig-line">(..............)</div>
-        </div>
-        <div class="sig-block">
-            <span class="sig-label">Hormat Kami,</span>
-            <div class="sig-line">(TOKO KUE SARI REZEKI)</div>
         </div>
     </div>
 

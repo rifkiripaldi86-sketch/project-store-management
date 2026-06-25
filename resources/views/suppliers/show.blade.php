@@ -113,7 +113,7 @@
             </div>
             <div class="info-field" style="grid-column: 1 / -1;">
                 <span class="info-field-label">Alamat</span>
-                <div class="info-field-value" style="min-height:60px; align-items:flex-start;">
+                <div class="info-field-value" style="min-height:60px; align-items:center;">
                     <i class="fas fa-location-dot"></i> {{ $supplier->alamat ?? '—' }}
                 </div>
             </div>

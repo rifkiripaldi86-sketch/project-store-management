@@ -114,7 +114,7 @@
             {{-- 7. STOK --}}
             <div class="mb-4">
                 <label class="form-label">Stok Awal <span class="required-star">*</span></label>
-                <input type="number" name="current_stock" value="{{ old('current_stock', 0) }}" class="form-control @error('current_stock') is-invalid @enderror" min="0" required>
+                <input type="number" name="current_stock" value="{{ old('current_stock', 0) }}" class="form-control @error('current_stock') is-invalid @enderror" min="0" readonly required>
             </div>
 
             <div class="form-actions">
