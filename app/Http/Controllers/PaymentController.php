@@ -6,6 +6,7 @@ use App\Models\Supplier;
 use App\Models\SupplierPayment;
 use App\Models\SupplierPaymentDetail;
 use App\Models\CashFlow;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -39,8 +40,26 @@ class PaymentController extends Controller
             )
             ->groupBy('di.product_id')
             ->get();
+$hargaBeliMap = $deliveryItems->pluck('harga', 'product_id');
+$kirimMap     = $deliveryItems->pluck('total_kirim', 'product_id');
+$productIds   = $hargaBeliMap->keys();
 
-        if ($deliveryItems->isEmpty()) {
+$saleItems = DB::table('sale_items as si')
+    ->join('sales as s', 'si.sale_id', '=', 's.id')
+    ->whereIn('si.product_id', $productIds)
+    ->whereBetween('s.tanggal', [
+        $validated['periode_awal'],
+        $validated['periode_akhir']
+    ])
+    ->select(
+        'si.product_id',
+        DB::raw('SUM(si.laku) as total_laku'),
+        DB::raw('SUM(si.laku * si.harga_jual) as total_pendapatan')
+    )
+    ->groupBy('si.product_id')
+    ->get();
+
+      if ($deliveryItems->isEmpty()) {
             return back()->with('error', 'Tidak ada kiriman pada periode tersebut.');
         }
 
@@ -241,5 +260,13 @@ public function history(Request $request)
         'payments',
         'suppliers'
     ));
+}
+
+public function destroy($id)
+{
+    $payment = SupplierPayment::findOrFail($id);
+    $payment->delete();
+
+    return redirect()->back()->with('success', 'Data berhasil dihapus');
 }
 }

@@ -52,13 +52,24 @@
                         Rp {{ number_format($payment->total_bayar,0,',','.') }}
                     </td>
 
-                    <td>
-                        <a href="{{ route('payments.print',$payment->id) }}"
-                           target="_blank"
-                           class="btn btn-sm btn-primary">
-                            👁 Lihat Nota
-                        </a>
-                    </td>
+                    <td class="d-flex gap-2">
+    <a href="{{ route('payments.print',$payment->id) }}"
+       target="_blank"
+       class="btn btn-sm btn-primary">
+        👁 Lihat Nota
+    </a>
+
+    <form action="{{ route('payments.destroy', $payment->id) }}"
+          method="POST"
+          onsubmit="return confirm('Yakin ingin menghapus data ini?')">
+        @csrf
+        @method('DELETE')
+
+        <button type="submit" class="btn btn-sm btn-danger">
+            🗑 Hapus
+        </button>
+    </form>
+</td>
                 </tr>
                 @empty
                 <tr>

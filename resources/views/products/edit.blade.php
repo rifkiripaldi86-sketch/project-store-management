@@ -351,7 +351,7 @@
                        value="{{ old('current_stock', $product->current_stock) }}"
                        class="form-control @error('current_stock') is-invalid @enderror"
                        min="0"
-                       readonly required>
+                       required>
 
                 <div class="form-hint">
                     Ubah angka di atas jika ingin menyesuaikan stok secara manual.

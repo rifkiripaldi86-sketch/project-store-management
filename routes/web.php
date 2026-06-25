@@ -47,6 +47,7 @@ Route::middleware('auth')->group(function () {
         Route::post('payments/store', [PaymentController::class, 'store'])->name('payments.store');
         Route::get('payments/print/{id}', [PaymentController::class, 'printNota'])->name('payments.print');
         Route::get('/payments/history', [PaymentController::class, 'history'])->name('payments.history');
+        Route::delete('/payments/{id}', [PaymentController::class, 'destroy'])->name('payments.destroy');
     });
 
     // Role khusus admin
