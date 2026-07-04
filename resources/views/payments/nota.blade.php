@@ -7,18 +7,22 @@
 <style>
     body, body *, table, th, td, span, div, p, label, strong {
     font-weight: 900 !important;
+     {
+    box-sizing: border-box;
+}
     }
     body {
-        font-family: 'Courier New', Courier, monospace;
-        font-size: 11px;
-        width: 58mm;
-        font-weight: bold;
-        margin: 0 auto;
-        padding: 5mm 4mm;
-        background: #fff;
-        color: #000;
-        line-height: 1.45;
-    }
+        font-family: Consolas, 'Courier New', monospace;
+    font-size: 13.5px; /* diperbesar */
+    width: 100%;
+    max-width: 50mm;
+    font-weight: 700;
+    margin: 0 auto;
+    padding: 6mm 6mm; /* margin aman kiri kanan */
+    background: #fff;
+    color: #000;
+    line-height: 1.6; /* lebih lega */
+}
 
     @media screen {
         body {
@@ -30,26 +34,36 @@
     }
 
     @media print {
-        @page { size: 58mm auto; margin: 0; }
-        body { width: 58mm; padding: 3mm; }
-        .no-print { display: none !important; }
+    @page { 
+        size: 52mm auto; 
+        margin: 0; 
     }
+
+    body {
+        width: 52mm;
+        padding: 2mm 6mm 4mm 6mm; /* ini penting supaya tidak kepotong */
+    }
+
+    .no-print { 
+        display: none !important; 
+    }
+}
 
     /* 58mm override */
     body.size-58mm { width: 58mm; font-size: 11px; }
     body.size-58mm .header h3 { font-size: 13px; }
     body.size-58mm .header .sub { font-size: 10px; }
     body.size-58mm table { font-size: 8px; }
-    body.size-58mm th { font-size: 7.5px; }
-    body.size-58mm .info-row { font-size: 10px; }
-    body.size-58mm .footer-line { font-size: 10px; }
+    body.size-58mm th { font-size: 9px; }
+    body.size-58mm .info-row { font-size: 11px; }
+    body.size-58mm .footer-line { font-size: 11px; }
     body.size-58mm .total-box { font-size: 12px; }
     body.size-58mm .date-header { font-size: 10px; }
     body.size-58mm .sig-block { font-size: 9px; }
     body.size-58mm .sig-line { width: 20mm; margin-top: 8mm; }
 
     @media print {
-        body.size-58mm { width: 58mm; }
+        body.size-52mm { max-width: 52mm; }
     }
 
     /* ─── Header ─── */
@@ -58,14 +72,14 @@
         padding-bottom: 4px;
     }
     .header h3 {
-        font-size: 13px;
+        font-size: 15px;
         font-weight: bold;
         text-transform: uppercase;
         letter-spacing: 1px;
-        margin-bottom: 2px;
+        margin-bottom: 3px;
     }
     .header .sub {
-        font-size: 9px;
+        font-size: 11px;
         letter-spacing: 0.3px;
     }
 
@@ -101,7 +115,7 @@
     .info-row {
         display: flex;
         justify-content: space-between;
-        font-size: 9px;
+        font-size: 11px;
         line-height: 1.6;
     }
     .info-row .label {
@@ -188,7 +202,7 @@
     .footer-line {
         display: flex;
         justify-content: space-between;
-        font-size: 9px;
+        font-size: 11px;
         line-height: 1.7;
     }
     .footer-line .label { color: #333; }
@@ -203,7 +217,7 @@
     .total-line {
         display: flex;
         justify-content: space-between;
-        font-size: 12px;
+        font-size: 14px;
         font-weight: bold;
         letter-spacing: 0.3px;
     }
@@ -244,7 +258,8 @@
     /* ─── Thank you ─── */
     .thank-you {
         text-align: center;
-        font-size: 8px;
+        font-size: 10px;
+        font-weight: bold;
         color: #666;
         margin-top: 8px;
         letter-spacing: 0.3px;
@@ -311,23 +326,23 @@
     {{-- ═══ Info ═══ --}}
     <div class="info-section">
         <div class="info-row">
-            <span class="label">No. Nota</span>
+            <span class="label">No. Nota :</span>
             <span class="value">#{{ str_pad($payment->id, 5, '0', STR_PAD_LEFT) }}</span>
         </div>
         <div class="info-row">
-            <span class="label">Supplier</span>
+            <span class="label">Supplier :</span>
             <span class="value">{{ $payment->supplier->nama_supplier }}</span>
         </div>
+    <div class="info-row">
+    <span class="label">Periode :</span>
+    <span class="value">
+        {{ \Carbon\Carbon::parse($payment->periode_awal)->format('d/m/Y') }}
+        s/d
+        {{ \Carbon\Carbon::parse($payment->periode_akhir)->format('d/m/Y') }}
+    </span>
+</div>
         <div class="info-row">
-            <span class="label">Periode</span>
-            <span class="value">
-                <span class="tgl-sys" data-date="{{ \Carbon\Carbon::parse($payment->periode_awal)->toDateString() }}"></span>
-                -
-                <span class="tgl-sys" data-date="{{ \Carbon\Carbon::parse($payment->periode_akhir)->toDateString() }}"></span>
-            </span>
-        </div>
-        <div class="info-row">
-            <span class="label">Dicetak</span>
+            <span class="label">Dicetak :</span>
             <span class="value"><span class="tgl-sys-dt" data-dt="{{ now()->toIso8601String() }}"></span></span>
         </div>
     </div>
@@ -346,10 +361,6 @@
 
     @foreach($details as $tanggal => $items)
 
-    <div class="date-header">
-        📅 <span class="tgl-long" data-date="{{ $tanggal }}"></span>
-    </div>
-
     @foreach($items as $row)
 
         @php
@@ -365,11 +376,11 @@
         @endphp
 
         <div style="margin-bottom:6px;">
-            <div style="font-weight:900; font-size:12px;">
+            <div style="font-weight:900; font-size:14px !important;">
     {{ $row['nama_produk'] }}
 </div>
 
-            <div style="display:flex;justify-content:space-between;font-size:12px;">
+            <div style="display:flex;justify-content:space-between;font-size:13px !important;">
                 <span>
                     {{ $row['laku'] }} x
                     {{ number_format($row['harga_beli'],0,',','.') }}

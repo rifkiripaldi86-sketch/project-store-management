@@ -16,7 +16,55 @@
     .stat-value { font-family: 'Sora', sans-serif; font-size: 22px; font-weight: 700; color: var(--ink); }
     .stat-sub { font-size: 12px; color: var(--ink-muted); margin-top: 3px; }
 
-    /* Table */
+    /* Filter */
+    .filter-card { background: var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);padding:14px 18px;margin-bottom:18px;box-shadow:var(--shadow-sm); }
+    .filter-form { display:grid; grid-template-columns:2fr 1fr 1fr 1fr auto; gap:10px; align-items:center; }
+    .search-box { position:relative; }
+    .search-box i { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--ink-muted); }
+    .search-box input { padding-left:40px; }
+    .filter-form input,
+    .filter-form select { height:40px; border:1px solid var(--border); border-radius:10px; padding:0 12px; width:100%; }
+
+    .filter-btn{
+    height:40px;
+    padding:0 20px;
+    border:none;
+    border-radius:10px;
+    background:#2563eb;
+    color:#fff;
+    font-weight:600;
+}
+
+@media(max-width:992px){
+    .filter-form{
+        grid-template-columns:1fr;
+    }
+}
+
+    /* ── Filter bar ── */
+    .filter-bar {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r-lg);
+        padding: 14px 18px;
+        display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+        margin-bottom: 16px;
+        box-shadow: var(--shadow-sm);
+    }
+    .filter-bar .form-control,
+    .filter-bar .form-select {
+        font-size: 13px; border-color: var(--border); border-radius: var(--r-sm);
+        height: 36px; padding: 0 10px; color: var(--ink);
+    }
+    .filter-bar .form-control:focus,
+    .filter-bar .form-select:focus {
+        border-color: var(--accent); box-shadow: 0 0 0 3px rgba(29,78,216,0.08);
+    }
+    .filter-bar label {
+        font-size: 12px; font-weight: 600; color: var(--ink-soft); white-space: nowrap;
+    }
+
+    /* Table */S]
     .main-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-xl); box-shadow: var(--shadow-sm); overflow: hidden; }
     .main-card-header { padding: 16px 24px; border-bottom: 1px solid var(--border); background: var(--bg); display: flex; align-items: center; gap: 10px; }
     .data-table { width: 100%; border-collapse: collapse; }
@@ -58,6 +106,51 @@
     </div>
 </div>
 
+<div class="filter-card">
+
+    <form method="GET" action="{{ route('sales.index') }}" class="filter-form">
+
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input
+                type="text"
+                name="search"
+                class="form-control"
+                placeholder="Cari nomor transaksi..."
+                value="{{ request('search') }}">
+        </div>
+
+        <select name="kasir" class="form-select">
+            <option value="">Semua Kasir</option>
+
+            @foreach($kasirs as $kasir)
+                <option
+                    value="{{ $kasir->id }}"
+                    {{ request('kasir')==$kasir->id ? 'selected':'' }}>
+                    {{ $kasir->name }}
+                </option>
+            @endforeach
+        </select>
+
+        <input
+            type="date"
+            name="from"
+            value="{{ request('from') }}">
+
+        <input
+            type="date"
+            name="to"
+            value="{{ request('to') }}">
+
+        <button class="filter-btn">
+            <i class="fas fa-filter me-1"></i>
+            Filter
+        </button>
+
+    </form>
+
+</div>
+
 <div class="main-card">
     <div class="main-card-header"><h5>Daftar Penjualan</h5></div>
     <div style="overflow-x:auto;">
@@ -66,6 +159,7 @@
                 <tr>
                     <th>No</th>
                     <th>Tanggal</th>
+                    <th>Supplier</th>
                     <th>Total Bayar</th>
                     <th>Kasir</th>
                     <th style="width:100px;">Aksi</th>
@@ -76,6 +170,20 @@
                 <tr>
                     <td>{{ $index + $sales->firstItem() }}</td>
                     <td>{{ \Carbon\Carbon::parse($sale->tanggal)->translatedFormat('d M Y') }}</td>
+                    <td>
+    @php
+        $suppliers = $sale->items
+            ->pluck('product.supplier.nama_supplier')
+            ->filter()
+            ->unique();
+    @endphp
+
+    @if($suppliers->count())
+        {{ $suppliers->implode(', ') }}
+    @else
+        -
+    @endif
+</td>
                     <td style="font-weight:600;">Rp {{ number_format($sale->total_bayar, 0, ',', '.') }}</td>
                     <td><span class="kasir-badge">{{ $sale->createdBy->name ?? '-' }}</span></td>
                     <td>
@@ -93,6 +201,7 @@
             </tbody>
         </table>
     </div>
+    
     @if($sales->hasPages())
     <div class="pagination-wrap">{{ $sales->links() }}</div>
     @endif

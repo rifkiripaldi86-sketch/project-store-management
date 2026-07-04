@@ -284,6 +284,14 @@
                     $nilaiKiriman = $delivery->items->sum(fn($i) => $i->jumlah_kirim * $i->harga);
                 @endphp
                 <tr>
+                    <td>
+    <div class="supplier-chip">
+        <span class="supplier-dot"></span>
+        <span style="font-weight:500;">
+            {{ $delivery->supplier->nama_supplier }}
+        </span>
+    </div>
+</td>
                     <td style="color:var(--ink-muted); font-size:12px;">
                         {{ $index + $deliveries->firstItem() }}
                     </td>

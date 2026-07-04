@@ -7,21 +7,50 @@ use App\Models\Product;
 use App\Models\SaleItem;
 use App\Models\Supplier;
 use App\Models\CashFlow;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class SaleController extends Controller
 {
-public function index()
+public function index(Request $request)
 {
-    // Ambil data penjualan dengan pagination
-    $sales = Sale::with('createdBy')->latest()->paginate(10);
+    $query = Sale::with('createdBy');
 
-    // Hitung total pendapatan dari SEMUA transaksi
-    $totalPendapatan = Sale::sum('total_bayar');
+    // Pencarian
+    if ($request->filled('search')) {
+        $query->where('id', 'like', '%' . $request->search . '%');
+    }
 
-    return view('sales.index', compact('sales', 'totalPendapatan'));
+    // Filter Kasir
+    if ($request->filled('kasir')) {
+        $query->where('created_by', $request->kasir);
+    }
+
+    // Filter tanggal
+    if ($request->filled('from')) {
+        $query->whereDate('tanggal', '>=', $request->from);
+    }
+
+    if ($request->filled('to')) {
+        $query->whereDate('tanggal', '<=', $request->to);
+    }
+
+    $sales = $query
+        ->latest()
+        ->paginate(10)
+        ->withQueryString();
+
+    $kasirs = User::orderBy('name')->get();
+
+    $totalPendapatan = (clone $query)->sum('total_bayar');
+
+    return view('sales.index', compact(
+        'sales',
+        'kasirs',
+        'totalPendapatan'
+    ));
 }
 
     public function create(\Illuminate\Http\Request $request)

@@ -10,11 +10,36 @@ use Illuminate\Support\Facades\DB;
 
 class DamagedController extends Controller
 {
-    public function index()
-    {
-        $damaged = DamagedItem::with('product', 'supplier', 'createdBy')->latest()->paginate(10);
-        return view('damaged.index', compact('damaged'));
+public function index(Request $request)
+{
+    $query = DamagedItem::with(['product', 'supplier', 'createdBy']);
+
+    if ($request->search) {
+        $query->whereHas('product', function ($q) use ($request) {
+            $q->where('nama_produk', 'like', "%{$request->search}%");
+        })->orWhereHas('supplier', function ($q) use ($request) {
+            $q->where('nama_supplier', 'like', "%{$request->search}%");
+        });
     }
+
+    if ($request->supplier) {
+        $query->where('supplier_id', $request->supplier);
+    }
+
+    if ($request->from) {
+        $query->whereDate('tanggal', '>=', $request->from);
+    }
+
+    if ($request->to) {
+        $query->whereDate('tanggal', '<=', $request->to);
+    }
+
+    $damaged = $query->latest()->paginate(10)->withQueryString();
+
+    $suppliers = Supplier::all();
+
+    return view('damaged.index', compact('damaged', 'suppliers'));
+}
 
     public function create()
     {
