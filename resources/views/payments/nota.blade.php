@@ -13,15 +13,15 @@
     }
     body {
         font-family: Consolas, 'Courier New', monospace;
-    font-size: 13.5px; /* diperbesar */
+    font-size: 13.5px;
     width: 100%;
     max-width: 50mm;
     font-weight: 700;
     margin: 0 auto;
-    padding: 6mm 6mm; /* margin aman kiri kanan */
+    padding: 6mm 6mm;
     background: #fff;
     color: #000;
-    line-height: 1.6; /* lebih lega */
+    line-height: 1.6;
 }
 
     @media screen {
@@ -34,22 +34,21 @@
     }
 
     @media print {
-    @page { 
-        size: 52mm auto; 
-        margin: 0; 
+    @page {
+        size: 52mm auto;
+        margin: 0;
     }
 
     body {
         width: 52mm;
-        padding: 2mm 6mm 4mm 6mm; /* ini penting supaya tidak kepotong */
+        padding: 2mm 6mm 4mm 6mm;
     }
 
-    .no-print { 
-        display: none !important; 
+    .no-print {
+        display: none !important;
     }
 }
 
-    /* 58mm override */
     body.size-58mm { width: 58mm; font-size: 11px; }
     body.size-58mm .header h3 { font-size: 13px; }
     body.size-58mm .header .sub { font-size: 10px; }
@@ -66,7 +65,6 @@
         body.size-52mm { max-width: 52mm; }
     }
 
-    /* ─── Header ─── */
     .header {
         text-align: center;
         padding-bottom: 4px;
@@ -83,7 +81,6 @@
         letter-spacing: 0.3px;
     }
 
-    /* ─── Dividers ─── */
     .div-double {
         border-top: 1px solid #000;
         border-bottom: 1px solid #000;
@@ -108,7 +105,6 @@
         white-space: nowrap;
     }
 
-    /* ─── Info rows ─── */
     .info-section {
         margin: 4px 0;
     }
@@ -127,7 +123,6 @@
         text-align: right;
     }
 
-    /* ─── Date group header ─── */
     .date-header {
         font-size: 9px;
         font-weight: bold;
@@ -138,7 +133,6 @@
         letter-spacing: 0.3px;
     }
 
-    /* ─── Table ─── */
     table {
         width: 100%;
         table-layout: fixed;
@@ -155,7 +149,6 @@
         white-space: nowrap;
     }
 
-    /* Column widths — 5 columns for better fit */
     .col-nama  { width: 36%; text-align: left; }
     .col-stok  { width: 12%; text-align: center; }
     .col-laku  { width: 12%; text-align: center; }
@@ -186,16 +179,21 @@
         line-height: 1.3;
     }
 
-    .row-warning td {
-        /* Visual indicator for laku > stok */
-    }
     .sisa-note {
         font-size: 7px;
         color: #666;
         display: inline;
     }
 
-    /* ─── Footer totals ─── */
+    /* ─── Barang sisa info (per produk) ─── */
+    .sisa-info {
+        font-size: 11px !important;
+        color: #444;
+        display: flex;
+        justify-content: space-between;
+        margin-top: 1px;
+    }
+
     .footer-section {
         margin: 4px 0;
     }
@@ -222,7 +220,6 @@
         letter-spacing: 0.3px;
     }
 
-    /* ─── Notes ─── */
     .note-section {
         font-size: 7.5px;
         color: #555;
@@ -230,7 +227,6 @@
         line-height: 1.5;
     }
 
-    /* ─── Signature ─── */
     .signature {
         margin-top: 12px;
         display: flex;
@@ -255,7 +251,6 @@
         font-size: 8px;
     }
 
-    /* ─── Thank you ─── */
     .thank-you {
         text-align: center;
         font-size: 10px;
@@ -265,7 +260,6 @@
         letter-spacing: 0.3px;
     }
 
-    /* ─── Buttons (no print) ─── */
     .no-print {
         text-align: center;
         margin-top: 16px;
@@ -353,7 +347,6 @@
     @php
         $grandStok        = 0;
         $grandLaku        = 0;
-        $grandSisa        = 0;
         $grandBayar       = 0;
         $adaLakuMelebihi  = false;
         $itemCount        = 0;
@@ -366,9 +359,10 @@
         @php
             $grandStok  += $row['stok'];
             $grandLaku  += $row['laku'];
-            $grandSisa  += $row['sisa'];
             $grandBayar += $row['bayar_supplier'];
             $itemCount++;
+
+            $sisaNilai = $row['sisa'] * $row['harga_beli'];
 
             if ($row['laku'] > $row['stok']) {
                 $adaLakuMelebihi = true;
@@ -390,6 +384,13 @@
                     {{ number_format($row['bayar_supplier'],0,',','.') }}
                 </span>
             </div>
+
+            @if($row['sisa'] > 0)
+            <div class="sisa-info">
+                <span>Barang Sisa: {{ $row['sisa'] }}</span>
+                <span>Rp {{ number_format($sisaNilai,0,',','.') }}</span>
+            </div>
+            @endif
         </div>
 
     @endforeach
@@ -421,10 +422,6 @@
             <span class="label">Total Laku</span>
             <span class="value">{{ $grandLaku }} pcs</span>
         </div>
-        <div class="footer-line">
-            <span class="label">Total Sisa</span>
-            <span class="value">{{ $grandSisa }} pcs</span>
-        </div>
     </div>
 
     {{-- ═══ Grand Total ═══ --}}
@@ -448,27 +445,23 @@
 
 </body>
 <script>
-    // Format tanggal panjang (dd/mm/yyyy)
     document.querySelectorAll('.tgl-sys').forEach(el => {
         const d = new Date(el.dataset.date + 'T00:00:00');
         el.textContent = d.toLocaleDateString('id-ID');
     });
 
-    // Format tanggal + jam
     document.querySelectorAll('.tgl-sys-dt').forEach(el => {
         const d = new Date(el.dataset.dt);
         el.textContent = d.toLocaleDateString('id-ID') + ' ' +
             d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
     });
 
-    // Format tanggal panjang di date group header
     document.querySelectorAll('.tgl-long').forEach(el => {
         const d = new Date(el.dataset.date + 'T00:00:00');
         const options = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
         el.textContent = d.toLocaleDateString('id-ID', options);
     });
 
-    // Pilih ukuran thermal
     function setSize(mm) {
         const body = document.getElementById('notaBody');
         body.classList.toggle('size-58mm', mm === 58);
