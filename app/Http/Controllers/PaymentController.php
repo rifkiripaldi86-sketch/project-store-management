@@ -174,74 +174,147 @@ $saleItems = DB::table('sale_items as si')
             ->with('success', 'Pembayaran supplier berhasil dicatat.');
     }
 
-    public function printNota($id)
-    {
-        $payment = SupplierPayment::with('supplier')->findOrFail($id);
+public function printNota($id)
+{
+    $payment = SupplierPayment::with('supplier')->findOrFail($id);
 
-        // Nama toko: dari kolom DB (tersimpan permanen) atau fallback config
-        $storeName = $payment->nama_toko
-            ?? config('app.store_name', config('app.name', 'TOKO'));
+    $storeName = $payment->nama_toko
+        ?? config('app.store_name', config('app.name', 'TOKO'));
 
-        // Harga beli & jumlah kiriman per produk dalam periode ini
-        $deliveryAgg = DB::table('delivery_items as di')
-            ->join('deliveries as d', 'di.delivery_id', '=', 'd.id')
-            ->where('d.supplier_id', $payment->supplier_id)
-            ->whereBetween('d.tanggal', [$payment->periode_awal, $payment->periode_akhir])
-            ->select(
-                'di.product_id',
-                DB::raw('MAX(di.harga) as harga'),
-                DB::raw('SUM(di.jumlah_kirim) as total_kirim')
-            )
-            ->groupBy('di.product_id')
-            ->get();
+    /*
+    |--------------------------------------------------------------------------
+    | Total kiriman per produk (dipakai untuk pembayaran supplier)
+    |--------------------------------------------------------------------------
+    */
+    $deliveryAgg = DB::table('delivery_items as di')
+        ->join('deliveries as d', 'di.delivery_id', '=', 'd.id')
+        ->where('d.supplier_id', $payment->supplier_id)
+        ->whereBetween('d.tanggal', [
+            $payment->periode_awal,
+            $payment->periode_akhir
+        ])
+        ->select(
+            'di.product_id',
+            DB::raw('MAX(di.harga) as harga'),
+            DB::raw('SUM(di.jumlah_kirim) as total_kirim')
+        )
+        ->groupBy('di.product_id')
+        ->get();
 
-        $hargaBeliMap = $deliveryAgg->pluck('harga', 'product_id');
-        $kirimMap     = $deliveryAgg->pluck('total_kirim', 'product_id');
+    $hargaBeliMap = $deliveryAgg->pluck('harga', 'product_id');
+    $kirimMap     = $deliveryAgg->pluck('total_kirim', 'product_id');
 
-        $saleData = DB::table('sale_items as si')
-            ->join('sales as s', 'si.sale_id', '=', 's.id')
-            ->join('products as p', 'si.product_id', '=', 'p.id')
-            ->whereIn('si.product_id', $hargaBeliMap->keys())
-            ->whereBetween('s.tanggal', [$payment->periode_awal, $payment->periode_akhir])
-            ->select(
-                's.tanggal',
-                'si.product_id',
-                'p.nama_produk',
-                DB::raw('SUM(si.laku) as laku'),
-                DB::raw('MAX(si.harga_jual) as harga_jual')
-            )
-            ->groupBy('s.tanggal', 'si.product_id', 'p.nama_produk')
-            ->orderBy('s.tanggal')
-            ->get();
+    /*
+    |--------------------------------------------------------------------------
+    | Kiriman PER HARI (dipakai untuk Barang Sisa)
+    |--------------------------------------------------------------------------
+    */
+    $deliveryPerDay = DB::table('delivery_items as di')
+        ->join('deliveries as d', 'di.delivery_id', '=', 'd.id')
+        ->where('d.supplier_id', $payment->supplier_id)
+        ->whereBetween('d.tanggal', [
+            $payment->periode_awal,
+            $payment->periode_akhir
+        ])
+        ->select(
+            'd.tanggal',
+            'di.product_id',
+            DB::raw('SUM(di.jumlah_kirim) as kirim')
+        )
+        ->groupBy('d.tanggal', 'di.product_id')
+        ->get()
+        ->keyBy(function ($row) {
+            return $row->tanggal . '_' . $row->product_id;
+        });
 
-        $details = $saleData->map(function ($sale) use ($hargaBeliMap, $kirimMap) {
-            $hargaBeli = $hargaBeliMap->get($sale->product_id, 0);
-            // Stok = total kiriman supplier dalam periode ini
-            $stok      = (int) $kirimMap->get($sale->product_id, 0);
-            $laku      = (int) $sale->laku;
-            // [BUG FIX] Sisa tidak boleh negatif meski laku > kiriman
-            $sisa      = max(0, $stok - $laku);
-            // [BUG FIX] Bayar supplier hanya untuk yang terjual ≤ kiriman
-            $lakuEfektif   = min($laku, $stok);
-            $bayarSupplier = $lakuEfektif * $hargaBeli;
-            $pendapatan    = $laku * (int) $sale->harga_jual;
+    /*
+    |--------------------------------------------------------------------------
+    | Penjualan PER HARI
+    |--------------------------------------------------------------------------
+    */
+    $saleData = DB::table('sale_items as si')
+        ->join('sales as s', 'si.sale_id', '=', 's.id')
+        ->join('products as p', 'si.product_id', '=', 'p.id')
+        ->whereIn('si.product_id', $hargaBeliMap->keys())
+        ->whereBetween('s.tanggal', [
+            $payment->periode_awal,
+            $payment->periode_akhir
+        ])
+        ->select(
+            's.tanggal',
+            'si.product_id',
+            'p.nama_produk',
+            DB::raw('SUM(si.laku) as laku'),
+            DB::raw('MAX(si.harga_jual) as harga_jual')
+        )
+        ->groupBy(
+            's.tanggal',
+            'si.product_id',
+            'p.nama_produk'
+        )
+        ->orderBy('s.tanggal')
+        ->get();
 
-            return [
-                'tanggal'        => $sale->tanggal,
-                'nama_produk'    => $sale->nama_produk,
-                'stok'           => $stok,
-                'laku'           => $laku,
-                'sisa'           => $sisa,
-                'harga_beli'     => $hargaBeli,
-                'harga_jual'     => (int) $sale->harga_jual,
-                'bayar_supplier' => $bayarSupplier,
-                'pendapatan'     => $pendapatan,
-                'keuntungan'     => $pendapatan - $bayarSupplier,
-            ];
-        })->groupBy('tanggal');
+    $details = $saleData->map(function ($sale) use (
+        $hargaBeliMap,
+        $kirimMap,
+        $deliveryPerDay
+    ) {
 
-        return view('payments.nota', compact('payment', 'details', 'storeName'));
-    }
+        $hargaBeli = (int) $hargaBeliMap->get($sale->product_id, 0);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Barang Sisa = Kiriman Hari Ini - Penjualan Hari Ini
+        |--------------------------------------------------------------------------
+        */
+        $key = $sale->tanggal . '_' . $sale->product_id;
+
+        $stokHariIni = 0;
+
+        if ($deliveryPerDay->has($key)) {
+            $stokHariIni = (int) $deliveryPerDay[$key]->kirim;
+        }
+
+        $lakuHariIni = (int) $sale->laku;
+
+        $barangSisa = max(0, $stokHariIni - $lakuHariIni);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Pembayaran Supplier tetap berdasarkan total kiriman periode
+        |--------------------------------------------------------------------------
+        */
+        $stokPeriode = (int) $kirimMap->get($sale->product_id, 0);
+
+        $lakuEfektif = min($lakuHariIni, $stokPeriode);
+
+        $bayarSupplier = $lakuEfektif * $hargaBeli;
+
+        $pendapatan = $lakuHariIni * (int) $sale->harga_jual;
+
+        return [
+            'tanggal'        => $sale->tanggal,
+            'nama_produk'    => $sale->nama_produk,
+            'stok'           => $stokHariIni,
+            'laku'           => $lakuHariIni,
+            'sisa'           => $barangSisa,
+            'harga_beli'     => $hargaBeli,
+            'harga_jual'     => (int) $sale->harga_jual,
+            'bayar_supplier' => $bayarSupplier,
+            'pendapatan'     => $pendapatan,
+            'keuntungan'     => $pendapatan - $bayarSupplier,
+        ];
+
+    })->groupBy('tanggal');
+    
+    return view('payments.nota', compact(
+        'payment',
+        'details',
+        'storeName'
+    ));
+
+} 
 
 public function history(Request $request)
 {

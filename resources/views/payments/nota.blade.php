@@ -9,8 +9,7 @@
     font-weight: 900 !important;
      {
     box-sizing: border-box;
-}
-    }
+    }}
     body {
         font-family: Consolas, 'Courier New', monospace;
     font-size: 13.5px;
@@ -124,14 +123,15 @@
     }
 
     .date-header {
-        font-size: 9px;
-        font-weight: bold;
-        background: #000;
-        color: #fff;
-        padding: 2px 4px;
-        margin: 4px 0 1px;
-        letter-spacing: 0.3px;
-    }
+    text-align: center;
+    font-size: 12px;
+    font-weight: 900;
+    padding: 4px 0;
+    margin: 6px 0 2px;
+    border-top: 1px solid #000;
+    border-bottom: 1px solid #000;
+    line-height: 1.4;
+}
 
     table {
         width: 100%;
@@ -341,8 +341,6 @@
         </div>
     </div>
 
-    <div class="div-solid"></div>
-
     {{-- ═══ Tabel detail ═══ --}}
     @php
         $grandStok        = 0;
@@ -353,6 +351,10 @@
     @endphp
 
     @foreach($details as $tanggal => $items)
+
+    <div class="date-header">
+    Tgl. Penjualan : {{ \Carbon\Carbon::parse($tanggal)->format('d/m/Y') }}
+</div>
 
     @foreach($items as $row)
 
@@ -388,7 +390,6 @@
             @if($row['sisa'] > 0)
             <div class="sisa-info">
                 <span>Barang Sisa: {{ $row['sisa'] }}</span>
-                <span>Rp {{ number_format($sisaNilai,0,',','.') }}</span>
             </div>
             @endif
         </div>

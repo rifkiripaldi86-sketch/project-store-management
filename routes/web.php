@@ -78,6 +78,9 @@ Route::get('/products/{id}/get-prices', function ($id) {
     ]);
 })->name('products.get-prices');
 
+Route::delete('/damaged/group', [DamagedController::class, 'destroyGroup'])
+    ->name('damaged.destroyGroup');
 Route::resource('units', UnitController::class);
 Route::resource('categories', CategoryController::class);
+
 });

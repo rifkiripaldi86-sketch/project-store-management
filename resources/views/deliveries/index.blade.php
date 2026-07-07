@@ -268,7 +268,7 @@
         <table class="data-table">
             <thead>
                 <tr>
-                    <th style="width:44px;">#</th>
+                    <th style="width:44px;">No. </th>
                     <th>Tanggal</th>
                     <th>Supplier</th>
                     <th>Nama Produk</th>
@@ -284,14 +284,6 @@
                     $nilaiKiriman = $delivery->items->sum(fn($i) => $i->jumlah_kirim * $i->harga);
                 @endphp
                 <tr>
-                    <td>
-    <div class="supplier-chip">
-        <span class="supplier-dot"></span>
-        <span style="font-weight:500;">
-            {{ $delivery->supplier->nama_supplier }}
-        </span>
-    </div>
-</td>
                     <td style="color:var(--ink-muted); font-size:12px;">
                         {{ $index + $deliveries->firstItem() }}
                     </td>
@@ -301,7 +293,6 @@
                     </td>
                     <td>
                         <div class="supplier-chip">
-                            <span class="supplier-dot"></span>
                             <span style="font-weight:500;">{{ $delivery->supplier->nama_supplier }}</span>
                         </div>
                     </td>

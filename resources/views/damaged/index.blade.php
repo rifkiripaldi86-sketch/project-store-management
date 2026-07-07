@@ -59,31 +59,97 @@
     <div class="card-body">
         <table class="table table-bordered">
             <thead>
-                <tr><th>No</th><th>Tanggal</th><th>Produk</th><th>Supplier</th><th>Jumlah</th><th>Keterangan</th><th>Input Oleh</th><th>Aksi</th></tr>
+                <tr>
+                <th>No</th>
+                <th>Tanggal</th>
+                <th>Supplier</th>
+                <th>Produk</th>
+                <th>Jumlah</th>
+                <th>Keterangan</th>
+                <th>Input Oleh</th>
+                <th>Aksi</th></tr>
             </thead>
             <tbody>
-                @forelse($damaged as $index => $d)
-                <tr>
-                    <td>{{ $index + $damaged->firstItem() }}</td>
-                    <td>{{ \Carbon\Carbon::parse($d->tanggal)->format('d/m/Y') }}</td>
-                    <td>{{ $d->product->nama_produk }}</td>
-                    <td>{{ $d->supplier ? $d->supplier->nama_supplier : '-' }}</td>
-                    <td>{{ $d->jumlah }}</td>
-                    <td>{{ $d->keterangan ?? '-' }}</td>
-                    <td>{{ $d->createdBy->name }}</td>
-                    <td>
-                        <form action="{{ route('damaged.destroy', $d) }}" method="POST">
-                            @csrf @method('DELETE')
-                            <button class="btn btn-sm btn-danger" onclick="return confirm('Hapus?')">Hapus</button>
-                        </form>
-                    </td>
-                </tr>
-                @empty
-                <tr><td colspan="8">Belum ada data rusak</td></tr>
-                @endforelse
-            </tbody>
+
+@forelse($damaged as $group)
+
+@php
+    $first = $group->first();
+@endphp
+
+<tr>
+
+    <td>{{ $loop->iteration }}</td>
+
+    <td>
+        {{ \Carbon\Carbon::parse($first->tanggal)->format('d/m/Y') }}
+    </td>
+
+    <td>
+        {{ optional($first->supplier)->nama_supplier ?? '-' }}
+    </td>
+
+    <td>
+        @foreach($group as $item)
+            {{ $item->product->nama_produk }}<br>
+        @endforeach
+    </td>
+
+    <td>
+        @foreach($group as $item)
+            {{ $item->jumlah }}<br>
+        @endforeach
+    </td>
+
+    <td>
+        @foreach($group as $item)
+            {{ $item->keterangan ?? '-' }}<br>
+        @endforeach
+    </td>
+
+    <td>
+        {{ $first->createdBy->name }}
+    </td>
+
+    <td>
+
+<form action="{{ route('damaged.destroyGroup') }}"
+      method="POST"
+      onsubmit="return confirm('Hapus semua data pada grup ini?')">
+
+    @csrf
+    @method('DELETE')
+
+    <input type="hidden"
+           name="tanggal"
+           value="{{ $first->tanggal }}">
+
+    <input type="hidden"
+           name="supplier_id"
+           value="{{ $first->supplier_id }}">
+
+    <button class="btn btn-danger btn-sm">
+        Hapus
+    </button>
+
+</form>
+
+</td>
+
+</tr>
+
+@empty
+
+<tr>
+    <td colspan="8" class="text-center">
+        Belum ada data
+    </td>
+</tr>
+
+@endforelse
+
+</tbody>
         </table>
-        {{ $damaged->links() }}
     </div>
 </div>
 @endsection
