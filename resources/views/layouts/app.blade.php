@@ -507,6 +507,58 @@
 
     @stack('styles')
 </head>
+<!-- Welcome Popup -->
+<div class="modal fade" id="welcomeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content welcome-card">
+
+            <div class="modal-body text-center">
+
+                <div class="welcome-icon">
+                    <i class="fas fa-store"></i>
+                </div>
+
+                <h2 class="welcome-title">
+                    Selamat Datang 👋
+                </h2>
+
+                <p class="welcome-text">
+                    Di Sistem Manajemen Toko
+                    <br>
+                    Kelola produk, transaksi, stok, dan laporan dengan mudah.
+                    <br>
+                    Pastikan dan Periksa terlebih dahulu Stok Produk selalu kosong,
+                    <br>Untuk memudahkan transaksi! 
+                </p>
+
+                <div class="welcome-user">
+                    <i class="fas fa-user-circle"></i>
+                    {{ Auth::user()->name ?? 'Admin Sari Rezeki' }}
+                </div>
+
+                <button type="button" 
+                        class="btn btn-start"
+                        data-bs-dismiss="modal">
+                    <i class="fas fa-arrow-right"></i>
+                    Mulai Sekarang
+                </button>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    var modal = new bootstrap.Modal(
+        document.getElementById('welcomeModal')
+    );
+
+    modal.show();
+});
+</script>
 <body>
 
     <!-- SIDEBAR (PUTIH ASAP) -->
@@ -742,6 +794,16 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    @if(session('welcome'))
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+        let modal = new bootstrap.Modal(
+            document.getElementById('welcomeModal')
+        );
+        modal.show();
+    });
+</script>
+@endif
     <script>
         // ── Sidebar: desktop collapse ──
         const sidebar  = document.getElementById('sidebar');

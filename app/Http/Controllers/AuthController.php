@@ -14,6 +14,7 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
+        session()->flash('welcome', true);
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required',
