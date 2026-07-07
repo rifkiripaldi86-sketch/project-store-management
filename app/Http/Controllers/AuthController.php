@@ -14,7 +14,6 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        session()->flash('welcome', true);
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required',
@@ -22,6 +21,7 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
+            session()->flash('welcome', true);
             return redirect()->intended('/');
         }
 
@@ -30,6 +30,7 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        session()->forget('welcome');
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

@@ -79,6 +79,120 @@
         a { text-decoration: none; }
 
         /* ────────────────────────────────────────────
+           Modal Popup Welcome
+        ──────────────────────────────────────────── */
+        /* =========================
+   Welcome Popup
+========================= */
+
+.welcome-card {
+    border-radius: 25px;
+    border: none;
+    overflow: hidden;
+    background: linear-gradient(
+        135deg,
+        #667eea,
+        #764ba2
+    );
+    color:white;
+    box-shadow:0 20px 50px rgba(0,0,0,.25);
+    animation: popupShow .5s ease;
+}
+
+
+.welcome-card .modal-body {
+    padding:45px 35px;
+}
+
+
+.welcome-icon {
+    width:90px;
+    height:90px;
+    margin:auto;
+    border-radius:50%;
+    background:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#667eea;
+    font-size:40px;
+    box-shadow:0 10px 25px rgba(0,0,0,.15);
+}
+
+
+.welcome-title {
+    margin-top:25px;
+    font-weight:700;
+    font-size:32px;
+}
+
+
+.welcome-text {
+    margin-top:15px;
+    font-size:16px;
+    opacity:.9;
+    line-height:1.6;
+}
+
+
+.welcome-user {
+    margin:25px auto;
+    padding:12px 20px;
+    background:rgba(255,255,255,.15);
+    border-radius:30px;
+    width:max-content;
+    font-weight:600;
+}
+
+
+.welcome-user i {
+    margin-right:8px;
+}
+
+
+.btn-start {
+
+    background:white;
+    color:#667eea;
+
+    padding:13px 35px;
+    border-radius:50px;
+
+    font-weight:700;
+
+    transition:.3s;
+
+}
+
+
+.btn-start:hover {
+
+    transform:translateY(-3px);
+
+    box-shadow:
+    0 10px 25px rgba(0,0,0,.2);
+
+}
+
+
+
+/* Animasi */
+
+@keyframes popupShow {
+
+    from {
+        transform:scale(.7);
+        opacity:0;
+    }
+
+    to {
+        transform:scale(1);
+        opacity:1;
+    }
+
+}
+
+        /* ────────────────────────────────────────────
            SIDEBAR (PUTIH ASAP)
         ──────────────────────────────────────────── */
         .sidebar {
@@ -548,19 +662,7 @@
         </div>
     </div>
 </div>
-
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    var modal = new bootstrap.Modal(
-        document.getElementById('welcomeModal')
-    );
-
-    modal.show();
-});
-</script>
 <body>
-
     <!-- SIDEBAR (PUTIH ASAP) -->
     <aside class="sidebar" id="sidebar">
 
@@ -794,16 +896,26 @@ document.addEventListener("DOMContentLoaded", function () {
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    @if(session('welcome'))
+        @if(session('welcome'))
 <script>
-    document.addEventListener("DOMContentLoaded", function(){
-        let modal = new bootstrap.Modal(
-            document.getElementById('welcomeModal')
-        );
-        modal.show();
-    });
+document.addEventListener("DOMContentLoaded", function(){
+
+    let modalElement = document.getElementById('welcomeModal');
+
+    if(modalElement){
+
+        let modal = new bootstrap.Modal(modalElement);
+
+        setTimeout(function(){
+            modal.show();
+        },800);
+
+    }
+
+});
 </script>
 @endif
+
     <script>
         // ── Sidebar: desktop collapse ──
         const sidebar  = document.getElementById('sidebar');
