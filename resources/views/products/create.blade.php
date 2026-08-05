@@ -52,7 +52,7 @@
             </div>
         </div>
 
-        <form method="POST" action="{{ route('products.store') }}">
+        <form method="POST" action="{{ route('products.store') }}" enctype="multipart/form-data">
             @csrf
 
             {{-- 1. NAMA PRODUK --}}
@@ -61,6 +61,58 @@
                 <input type="text" name="nama_produk" value="{{ old('nama_produk') }}" placeholder="Contoh: Kue Black Forest" class="form-control @error('nama_produk') is-invalid @enderror" required autofocus>
                 @error('nama_produk') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
             </div>
+
+            <div class="mb-4">
+    <label class="form-label">
+        Barcode
+        <span class="required-star">*</span>
+    </label>
+
+    <input
+        type="text"
+        name="barcode"
+        id="barcode"
+        value="{{ old('barcode') }}"
+        class="form-control"
+        placeholder="Scan barcode menggunakan scanner USB"
+        autocomplete="off">
+
+    <div class="form-hint">
+        Arahkan scanner ke barcode produk.
+    </div>
+</div>
+
+{{-- FOTO PRODUK --}}
+<div class="mb-4">
+    <label class="form-label">
+        Gambar Produk
+    </label>
+
+    <input
+        type="file"
+        name="image"
+        id="image"
+        class="form-control @error('image') is-invalid @enderror"
+        accept="image/*">
+
+    <div class="form-hint">
+        Format: JPG, PNG, WEBP. Maksimal 2MB.
+    </div>
+
+    @error('image')
+        <div class="invalid-feedback d-block">
+            {{ $message }}
+        </div>
+    @enderror
+
+    <div class="mt-3">
+        <img id="preview-image"
+             src="#"
+             style="display:none;max-width:220px;border-radius:12px;border:1px solid #ddd;padding:5px;">
+    </div>
+</div>
+
+
 
             <div class="row">
                 {{-- 2. SUPPLIER --}}
@@ -124,4 +176,66 @@
         </form>
     </div>
 </div>
+
+@push('scripts')
+<script>
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    const barcode = document.getElementById('barcode');
+
+    barcode.focus();
+
+    barcode.addEventListener('keydown', function(e){
+
+        if(e.key === 'Enter'){
+
+            e.preventDefault();
+
+            document.querySelector('[name="nama_produk"]').focus();
+
+        }
+
+    });
+
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    const barcode = document.getElementById('barcode');
+
+    barcode.focus();
+
+    barcode.addEventListener('keydown', function(e){
+
+        if(e.key === 'Enter'){
+            e.preventDefault();
+            document.querySelector('[name="nama_produk"]').focus();
+        }
+
+    });
+
+    // Preview gambar
+    const image = document.getElementById('image');
+    const preview = document.getElementById('preview-image');
+
+    image.addEventListener('change', function(e){
+
+        const file = e.target.files[0];
+
+        if(file){
+            preview.src = URL.createObjectURL(file);
+            preview.style.display = "block";
+        }else{
+            preview.style.display = "none";
+        }
+
+    });
+
+});
+
+
+</script>
+@endpush
+
 @endsection

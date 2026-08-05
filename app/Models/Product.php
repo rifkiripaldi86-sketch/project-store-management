@@ -12,12 +12,15 @@ class Product extends Model
 
     protected $fillable = [
         'nama_produk',
+        'thumbnail',
+        'barcode',
         'supplier_id',
         'current_stock',
         'harga_jual',
         'harga_beli',
         'unit_id',
-        'category_id'
+        'category_id',
+        'image',
     ];
 
     // ─── Relasi ────────────────────────────────────────────────

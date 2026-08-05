@@ -223,8 +223,57 @@
                 </div>
             </div>
 
-            {{-- Daftar Produk --}}
+                        {{-- Daftar Produk --}}
             <div class="section-title">Daftar Produk Terjual</div>
+
+            <div class="field-group mb-3">
+    <label class="field-label">
+        Scan Barcode
+    </label>
+
+    <div class="input-group">
+        <input
+            type="text"
+            id="barcode-input"
+            class="form-control"
+            placeholder="Scan barcode di sini..."
+            autocomplete="off">
+
+        <button type="button"
+                id="btn-camera-scan"
+                class="btn btn-outline-primary">
+            <i class="fas fa-barcode"></i>
+        </button>
+    </div>
+
+    <small class="text-muted">
+        Scan barcode menggunakan scanner atau kamera.
+    </small>
+</div>
+<div class="card mt-3 mb-3" id="product-preview" style="display:none;">
+    <div class="card-body d-flex align-items-center">
+
+        <img
+            id="preview-image"
+            src=""
+            width="80"
+            height="80"
+            style="object-fit:cover;border-radius:8px;">
+
+        <div class="ms-3">
+            <h5 id="preview-name" class="mb-1"></h5>
+
+            <small id="preview-price" class="text-success"></small>
+
+            <br>
+
+            <small id="preview-stock" class="text-muted"></small>
+
+        </div>
+
+    </div>
+</div>
+
 
             <div class="items-header d-none d-md-grid">
                 <span>Produk</span>
@@ -416,16 +465,11 @@
         // Isi otomatis opsi produk sesuai supplier yang aktif pada baris baru ini
         const select = newRow.querySelector('.product-select');
         populateProductOptions(select, supplierId);
-        PRODUCTS.forEach(product => {
-                if (product.supplier_id == supplierId) {
-                    // Tambahkan data-harga di sini
-                    options += `<option value="${product.id}" data-stok="${product.stok}" data-harga="${product.harga_jual}">
-                        ${product.nama_produk} (Stok: ${product.stok})
-                    </option>`;
-                    hasProducts = true;
-                }
-            });
+        
         updateGrandTotalAndCount();
+
+        return row;
+
     }
 
     // Fungsi pembantu untuk mengisi opsi produk berdasarkan supplier id secara real-time
@@ -506,5 +550,144 @@
             alert('Lengkapi semua data kolom produk terlebih dahulu!');
         }
     });
+
+    const barcodeInput = document.getElementById('barcode-input');
+
+barcodeInput.addEventListener('keydown', function(e){
+
+    if(e.key !== 'Enter') return;
+
+    e.preventDefault();
+
+    const barcode = this.value.trim();
+
+    const product = PRODUCTS.find(p => p.barcode == barcode);
+
+    console.log(product);
+console.log(product.image);
+
+
+    if(!product){
+
+        alert("Produk tidak ditemukan");
+
+        this.value = "";
+
+        return;
+
+    }
+
+    // tampil preview
+    document.getElementById('product-preview').style.display = "block";
+
+    document.getElementById('preview-name').innerHTML =
+        product.nama_produk;
+
+    document.getElementById('preview-price').innerHTML =
+        "Harga : Rp " +
+        Number(product.harga_jual).toLocaleString('id-ID');
+
+    document.getElementById('preview-stock').innerHTML =
+        "Stok : " + product.stok;
+
+    document.getElementById('preview-image').src =
+    product.image;
+
+// Cek apakah produk sudah ada di daftar
+let existingRow = null;
+
+document.querySelectorAll('.item-row').forEach(row => {
+
+    const select = row.querySelector('.product-select');
+
+    if(select.value == product.id){
+        existingRow = row;
+    }
+
+});
+
+
+// Jika sudah ada, tambah jumlah
+if(existingRow){
+
+    const qtyInput = existingRow.querySelector('.qty-input');
+
+    qtyInput.value = parseInt(qtyInput.value || 0) + 1;
+
+    updateRowSubtotal(existingRow);
+    updateGrandTotalAndCount();
+
+}
+// Jika belum ada, buat baris baru
+else {
+
+    const supplier = document.getElementById('supplier_id');
+
+
+    // ubah supplier otomatis
+    if(supplier.value != product.supplier_id){
+
+        supplier.value = product.supplier_id;
+
+        supplier.dispatchEvent(new Event('change'));
+
+    }
+
+
+    let row;
+
+
+    // kalau baris pertama masih kosong pakai itu
+    const firstRow = document.querySelector('.item-row');
+
+    if(
+        firstRow.querySelector('.product-select').value == "" 
+    ){
+
+        row = firstRow;
+
+    }
+    else {
+
+        addNewRow();
+
+        const rows = document.querySelectorAll('.item-row');
+
+        row = rows[rows.length - 1];
+
+    }
+
+
+    const select = row.querySelector('.product-select');
+
+
+    // tunggu opsi produk selesai dibuat
+    setTimeout(()=>{
+
+        select.value = product.id;
+
+        select.dispatchEvent(new Event('change'));
+
+
+        row.querySelector('.qty-input').value = 1;
+
+        row.querySelector('.price-input').value =
+            product.harga_jual;
+
+
+        updateRowSubtotal(row);
+
+        updateGrandTotalAndCount();
+
+
+    },200);
+
+}
+
+
+    this.value="";
+
+});
+
 </script>
 @endpush

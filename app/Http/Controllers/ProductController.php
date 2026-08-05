@@ -57,12 +57,14 @@ class ProductController extends Controller
     {
         $request->validate([
             'nama_produk'   => 'required|string|max:255',
+            'barcode' => 'required|unique:products,barcode,NULL,id,deleted_at,NULL',
             'supplier_id'   => 'required|exists:suppliers,id',
             'category_id'   => 'required|exists:categories,id',
             'unit_id'       => 'required|exists:units,id',
             'harga_jual'    => 'required|numeric|min:0',
             'harga_beli'    => 'required|numeric|min:0',
             'current_stock' => 'required|integer|min:0',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
         $existing = Product::withTrashed()
@@ -93,6 +95,21 @@ class ProductController extends Controller
                 'error',
                 'Produk "' . $request->nama_produk . '" sudah terdaftar untuk supplier ini.'
             );
+
+            if ($request->hasFile('thumbnail')) {
+
+    $file = $request->file('thumbnail');
+
+    $filename = time().'_'.$file->getClientOriginalName();
+
+    $file->storeAs(
+        'products',
+        $filename,
+        'public'
+    );
+
+    $data['thumbnail'] = $filename;
+}
 }
 
 
@@ -100,6 +117,8 @@ DB::transaction(function () use ($request) {
 
     $product = Product::create([
         'nama_produk'   => $request->nama_produk,
+        'barcode' => $request->barcode,
+        'image' => $request->file('image') ? $request->file('image')->store('products', 'public') : null,
         'supplier_id'   => $request->supplier_id,
         'category_id'   => $request->category_id,
         'unit_id'       => $request->unit_id,
@@ -149,12 +168,14 @@ return redirect()
 {
 $request->validate([
 'nama_produk'   => 'required|string|max:255',
+'barcode' => 'required|string|unique:products,barcode,' . $product->id . ',id,deleted_at,NULL',
 'supplier_id'   => 'required|exists:suppliers,id',
 'category_id'   => 'required|exists:categories,id',
 'unit_id'       => 'required|exists:units,id',
 'harga_jual'    => 'required|numeric|min:0',
 'harga_beli'    => 'required|numeric|min:0',
 'current_stock' => 'required|integer|min:0',
+'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
 ]);
 
 DB::transaction(function () use ($request, $product) {
@@ -166,6 +187,8 @@ DB::transaction(function () use ($request, $product) {
 
     $product->update([
         'nama_produk'   => $request->nama_produk,
+        'barcode' => 'required|string|unique:products,barcode,' . $product->id . ',id,deleted_at,NULL',
+        'image' => $request->file('image') ? $request->file('image')->store('products', 'public') : $product->image,
         'supplier_id'   => $request->supplier_id,
         'category_id'   => $request->category_id,
         'unit_id'       => $request->unit_id,

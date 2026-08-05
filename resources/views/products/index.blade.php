@@ -20,6 +20,27 @@
     .stock-low { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
     .stock-high { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
     .action-btn { width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--border); display: inline-flex; align-items: center; justify-content: center; }
+    .product-thumb {
+    width: 45px;
+    height: 45px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid var(--border);
+    background: #f8fafc;
+}
+
+.product-thumb-placeholder {
+    width: 45px;
+    height: 45px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    color: #94a3b8;
+    font-size: 18px;
+}
+
 </style>
 @endpush
 
@@ -71,6 +92,7 @@
             <thead>
                 <tr>
                     <th>No</th>
+                    <th>Foto</th>
                     <th>Nama Produk</th>
                     <th>Kategori</th>
                     <th>Satuan</th>
@@ -82,8 +104,24 @@
             <tbody>
                 @forelse($products as $index => $prod)
                 <tr>
-                    <td>{{ $index + $products->firstItem() }}</td>
-                    <td class="fw-bold">{{ $prod->nama_produk }}</td>
+                    <tr>
+    <td>{{ $index + $products->firstItem() }}</td>
+
+    <td>
+        @if($prod->image)
+            <img 
+                src="{{ asset('storage/' . $prod->image) }}" 
+                alt="{{ $prod->nama_produk }}"
+                class="product-thumb">
+        @else
+            <div class="product-thumb-placeholder">
+                <i class="fas fa-image"></i>
+            </div>
+        @endif
+    </td>
+
+    <td class="fw-bold">{{ $prod->nama_produk }}</td>
+
                     <td>{{ $prod->category->nama_kategori ?? '-' }}</td>
                     <td>{{ $prod->unit->name ?? '-' }}</td>
                     <td>Rp {{ number_format($prod->harga_jual, 0, ',', '.') }}</td>
@@ -103,7 +141,12 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="7" class="text-center py-4">Belum ada produk.</td></tr>
+                <tr>
+    <td colspan="8" class="text-center py-4">
+        Belum ada produk.
+    </td>
+</tr>
+
                 @endforelse
             </tbody>
         </table>

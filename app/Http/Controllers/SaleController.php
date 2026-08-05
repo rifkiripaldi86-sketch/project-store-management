@@ -68,9 +68,11 @@ public function index(Request $request)
     return [
         'id'          => $p->id,
         'nama_produk' => $p->nama_produk,
+        'barcode'     => $p->barcode,
         'stok'        => $p->current_stock,
         'supplier_id' => $p->supplier_id,
         'harga_jual'  => $p->harga_jual,
+        'image'       => $p->image ? asset('storage/' . $p->image) : null,
     ];
 })->values();
 
